@@ -4,7 +4,10 @@ use App\Http\Controllers\BastController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::inertia(
+    '/',
+    'welcome',
+)->name('home');
 
 Route::middleware([
     'auth',
@@ -16,6 +19,14 @@ Route::middleware([
         DashboardController::class,
     )->name('dashboard');
 
+    Route::post(
+        'bast/{bast}/finalize',
+        [
+            BastController::class,
+            'finalize',
+        ],
+    )->name('bast.finalize');
+
     Route::resource(
         'bast',
         BastController::class,
@@ -24,38 +35,55 @@ Route::middleware([
         'create',
         'store',
         'show',
+        'destroy',
     ]);
 
-    Route::inertia('archive', 'module-placeholder', [
-        'title' => 'Arsip',
-        'description' => 'Modul arsip dokumen Berita Acara Serah Terima sedang dipersiapkan.',
-        'href' => '/archive',
-    ])->name('archive.index');
+    Route::inertia(
+        'archive',
+        'module-placeholder',
+        [
+            'title' => 'Arsip',
+            'description' => 'Modul arsip dokumen Berita Acara Serah Terima sedang dipersiapkan.',
+            'href' => '/archive',
+        ],
+    )->name('archive.index');
 
     Route::middleware(
         'role:super-admin,admin',
     )->group(function () {
-        Route::inertia('master', 'module-placeholder', [
-            'title' => 'Data Master',
-            'description' => 'Pengelolaan jenis BAST, kategori item, satuan, dan data master lainnya sedang dipersiapkan.',
-            'href' => '/master',
-        ])->name('master.index');
+        Route::inertia(
+            'master',
+            'module-placeholder',
+            [
+                'title' => 'Data Master',
+                'description' => 'Pengelolaan jenis BAST, kategori item, satuan, dan data master lainnya sedang dipersiapkan.',
+                'href' => '/master',
+            ],
+        )->name('master.index');
 
-        Route::inertia('activity-logs', 'module-placeholder', [
-            'title' => 'Activity Log',
-            'description' => 'Riwayat aktivitas dan audit sistem sedang dipersiapkan.',
-            'href' => '/activity-logs',
-        ])->name('activity-logs.index');
+        Route::inertia(
+            'activity-logs',
+            'module-placeholder',
+            [
+                'title' => 'Activity Log',
+                'description' => 'Riwayat aktivitas dan audit sistem sedang dipersiapkan.',
+                'href' => '/activity-logs',
+            ],
+        )->name('activity-logs.index');
     });
 
     Route::middleware(
         'role:super-admin',
     )->group(function () {
-        Route::inertia('users', 'module-placeholder', [
-            'title' => 'Pengguna',
-            'description' => 'Modul pengelolaan akun pengguna dan hak akses sedang dipersiapkan.',
-            'href' => '/users',
-        ])->name('users.index');
+        Route::inertia(
+            'users',
+            'module-placeholder',
+            [
+                'title' => 'Pengguna',
+                'description' => 'Modul pengelolaan akun pengguna dan hak akses sedang dipersiapkan.',
+                'href' => '/users',
+            ],
+        )->name('users.index');
     });
 });
 

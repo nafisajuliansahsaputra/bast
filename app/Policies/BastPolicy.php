@@ -51,6 +51,25 @@ class BastPolicy
         return $this->update($user, $bast);
     }
 
+    public function finalize(User $user, Bast $bast): bool
+    {
+        return $this->update($user, $bast);
+    }
+
+    public function manageAttachments(User $user, Bast $bast): bool
+    {
+        if ($bast->isArchived() || $bast->isCancelled()) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin() || $user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isStaff()
+            && $bast->created_by === $user->id;
+    }
+
     public function restore(User $user, Bast $bast): bool
     {
         return false;

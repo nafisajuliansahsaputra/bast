@@ -27,10 +27,33 @@ class BastController extends Controller
 
         abort_unless($user instanceof User, 403);
 
-        $search = trim((string) $request->query('search', ''));
-        $status = trim((string) $request->query('status', ''));
-        $type = trim((string) $request->query('type', ''));
-        $year = trim((string) $request->query('year', ''));
+        $search = trim(
+            (string) $request->query(
+                'search',
+                '',
+            ),
+        );
+
+        $status = trim(
+            (string) $request->query(
+                'status',
+                '',
+            ),
+        );
+
+        $type = trim(
+            (string) $request->query(
+                'type',
+                '',
+            ),
+        );
+
+        $year = trim(
+            (string) $request->query(
+                'year',
+                '',
+            ),
+        );
 
         $years = $this->visibleBasts($user)
             ->whereNotNull('document_year')
@@ -52,35 +75,47 @@ class BastController extends Controller
             ]);
 
         if ($search !== '') {
-            $query->where(function (Builder $builder) use ($search): void {
-                $builder
-                    ->where('title', 'like', "%{$search}%")
-                    ->orWhere(
-                        'document_number',
-                        'like',
-                        "%{$search}%",
-                    )
-                    ->orWhereHas(
-                        'parties',
-                        function (Builder $partyQuery) use ($search): void {
-                            $partyQuery->where(
-                                'name',
-                                'like',
-                                "%{$search}%",
-                            );
-                        },
-                    )
-                    ->orWhereHas(
-                        'items',
-                        function (Builder $itemQuery) use ($search): void {
-                            $itemQuery->where(
-                                'name',
-                                'like',
-                                "%{$search}%",
-                            );
-                        },
-                    );
-            });
+            $query->where(
+                function (
+                    Builder $builder,
+                ) use ($search): void {
+                    $builder
+                        ->where(
+                            'title',
+                            'like',
+                            "%{$search}%",
+                        )
+                        ->orWhere(
+                            'document_number',
+                            'like',
+                            "%{$search}%",
+                        )
+                        ->orWhereHas(
+                            'parties',
+                            function (
+                                Builder $partyQuery,
+                            ) use ($search): void {
+                                $partyQuery->where(
+                                    'name',
+                                    'like',
+                                    "%{$search}%",
+                                );
+                            },
+                        )
+                        ->orWhereHas(
+                            'items',
+                            function (
+                                Builder $itemQuery,
+                            ) use ($search): void {
+                                $itemQuery->where(
+                                    'name',
+                                    'like',
+                                    "%{$search}%",
+                                );
+                            },
+                        );
+                },
+            );
         }
 
         $allowedStatuses = [
@@ -91,18 +126,33 @@ class BastController extends Controller
             Bast::STATUS_CANCELLED,
         ];
 
-        if (in_array($status, $allowedStatuses, true)) {
-            $query->where('status', $status);
+        if (
+            in_array(
+                $status,
+                $allowedStatuses,
+                true,
+            )
+        ) {
+            $query->where(
+                'status',
+                $status,
+            );
         }
 
-        if ($type !== '' && ctype_digit($type)) {
+        if (
+            $type !== ''
+            && ctype_digit($type)
+        ) {
             $query->where(
                 'bast_type_id',
                 (int) $type,
             );
         }
 
-        if ($year !== '' && ctype_digit($year)) {
+        if (
+            $year !== ''
+            && ctype_digit($year)
+        ) {
             $query->where(
                 'document_year',
                 (int) $year,
@@ -114,78 +164,110 @@ class BastController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('bast/index', [
-            'basts' => $basts,
+        return Inertia::render(
+            'bast/index',
+            [
+                'basts' => $basts,
 
-            'filters' => [
-                'search' => $search,
-                'status' => $status,
-                'type' => $type,
-                'year' => $year,
+                'filters' => [
+                    'search' => $search,
+                    'status' => $status,
+                    'type' => $type,
+                    'year' => $year,
+                ],
+
+                'bastTypes' => BastType::query()
+                    ->where(
+                        'is_active',
+                        true,
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
+
+                'years' => $years,
             ],
-
-            'bastTypes' => BastType::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get([
-                    'id',
-                    'name',
-                ]),
-
-            'years' => $years,
-        ]);
+        );
     }
 
-    public function create(Request $request): Response
-    {
-        Gate::authorize('create', Bast::class);
+    public function create(
+        Request $request,
+    ): Response {
+        Gate::authorize(
+            'create',
+            Bast::class,
+        );
 
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         $departments = Department::query()
-            ->where('is_active', true)
+            ->where(
+                'is_active',
+                true,
+            )
             ->orderBy('name');
 
         if ($user->isStaff()) {
-            $departments->whereKey($user->department_id);
+            $departments->whereKey(
+                $user->department_id,
+            );
         }
 
-        return Inertia::render('bast/create', [
-            'bastTypes' => BastType::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get([
-                    'id',
-                    'name',
-                ]),
+        return Inertia::render(
+            'bast/create',
+            [
+                'bastTypes' => BastType::query()
+                    ->where(
+                        'is_active',
+                        true,
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-            'departments' => $departments->get([
-                'id',
-                'name',
-                'code',
-            ]),
+                'departments' => $departments
+                    ->get([
+                        'id',
+                        'name',
+                        'code',
+                    ]),
 
-            'itemCategories' => ItemCategory::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get([
-                    'id',
-                    'name',
-                ]),
+                'itemCategories' => ItemCategory::query()
+                    ->where(
+                        'is_active',
+                        true,
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-            'units' => Unit::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get([
-                    'id',
-                    'name',
-                    'symbol',
-                ]),
+                'units' => Unit::query()
+                    ->where(
+                        'is_active',
+                        true,
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                        'symbol',
+                    ]),
 
-            'defaultDepartmentId' => $user->department_id,
-        ]);
+                'defaultDepartmentId' => $user
+                    ->department_id,
+            ],
+        );
     }
 
     public function store(
@@ -194,7 +276,10 @@ class BastController extends Controller
     ): RedirectResponse {
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         $bast = $bastService->createDraft(
             $user,
@@ -204,7 +289,10 @@ class BastController extends Controller
         );
 
         return redirect()
-            ->route('bast.show', $bast)
+            ->route(
+                'bast.show',
+                $bast,
+            )
             ->with(
                 'success',
                 'Draft BAST berhasil disimpan.',
@@ -215,33 +303,136 @@ class BastController extends Controller
         Request $request,
         Bast $bast,
     ): Response {
-        Gate::authorize('view', $bast);
+        Gate::authorize(
+            'view',
+            $bast,
+        );
 
         $bast->load([
             'bastType:id,name',
+
             'department:id,name,code',
+
             'creator:id,name,email',
+
+            'finalizedBy:id,name',
+
             'parties' => fn ($query) => $query
                 ->orderBy('sort_order'),
+
             'items' => fn ($query) => $query
                 ->with([
                     'itemCategory:id,name',
                     'unit:id,name,symbol',
                 ])
                 ->orderBy('sort_order'),
+
             'attachments',
         ]);
 
-        return Inertia::render('bast/show', [
-            'bast' => $bast,
-        ]);
+        return Inertia::render(
+            'bast/show',
+            [
+                'bast' => $bast,
+
+                'permissions' => [
+                    'update' => Gate::allows(
+                        'update',
+                        $bast,
+                    ),
+
+                    'delete' => Gate::allows(
+                        'delete',
+                        $bast,
+                    ),
+
+                    'finalize' => Gate::allows(
+                        'finalize',
+                        $bast,
+                    ),
+
+                    'manageAttachments' => Gate::allows(
+                        'manageAttachments',
+                        $bast,
+                    ),
+                ],
+            ],
+        );
+    }
+
+    public function finalize(
+        Request $request,
+        Bast $bast,
+        BastService $bastService,
+    ): RedirectResponse {
+        Gate::authorize(
+            'finalize',
+            $bast,
+        );
+
+        $user = $request->user();
+
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
+
+        $bast = $bastService->finalize(
+            $user,
+            $bast,
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return redirect()
+            ->route(
+                'bast.show',
+                $bast,
+            )
+            ->with(
+                'success',
+                'BAST berhasil difinalisasi.',
+            );
+    }
+
+    public function destroy(
+        Request $request,
+        Bast $bast,
+        BastService $bastService,
+    ): RedirectResponse {
+        Gate::authorize(
+            'delete',
+            $bast,
+        );
+
+        $user = $request->user();
+
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
+
+        $bastService->deleteDraft(
+            $user,
+            $bast,
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return redirect()
+            ->route('bast.index')
+            ->with(
+                'success',
+                'Draft BAST berhasil dihapus.',
+            );
     }
 
     /**
      * @return Builder<Bast>
      */
-    private function visibleBasts(User $user): Builder
-    {
+    private function visibleBasts(
+        User $user,
+    ): Builder {
         $query = Bast::query();
 
         if ($user->isStaff()) {

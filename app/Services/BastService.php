@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Models\Bast;
 use App\Models\BastParty;
+use App\Models\DocumentSequence;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use RuntimeException;
 
 class BastService
 {
@@ -31,20 +33,15 @@ class BastService
                 (string) $data['document_date'],
             );
 
-            $departmentId = $user->isStaff()
-                ? $user->department_id
-                : (int) $data['department_id'];
-
-            if ($departmentId === null) {
-                throw ValidationException::withMessages([
-                    'department_id' => 'Akun Staff belum memiliki unit atau bidang.',
-                ]);
-            }
+            $departmentId = $this->resolveDepartmentId(
+                $user,
+                $data,
+            );
 
             $bast = Bast::query()->create([
                 'document_number' => null,
                 'sequence_number' => null,
-                'document_code' => 'BAST',
+                'document_code' => $this->documentCode(),
 
                 'document_month' => $documentDate->month,
                 'document_year' => $documentDate->year,
@@ -54,6 +51,7 @@ class BastService
                 'created_by' => $user->id,
 
                 'title' => (string) $data['title'],
+
                 'description' => $this->nullableString(
                     $data['description'] ?? null,
                 ),
@@ -82,13 +80,17 @@ class BastService
             $bast->activityLogs()->create([
                 'user_id' => $user->id,
                 'action' => 'BAST_CREATED',
+
                 'description' => sprintf(
                     'Membuat draft BAST "%s".',
                     $bast->title,
                 ),
+
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent,
+
                 'old_values' => null,
+
                 'new_values' => [
                     'title' => $bast->title,
                     'status' => $bast->status,
@@ -99,6 +101,283 @@ class BastService
 
             return $bast;
         });
+    }
+
+    public function finalize(
+        User $user,
+        Bast $bast,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): Bast {
+        return DB::transaction(function () use (
+            $user,
+            $bast,
+            $ipAddress,
+            $userAgent,
+        ): Bast {
+            $lockedBast = Bast::query()
+                ->whereKey($bast->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedBast->isDraft()) {
+                throw ValidationException::withMessages([
+                    'bast' => 'BAST ini sudah tidak berstatus Draft.',
+                ]);
+            }
+
+            if (
+                ! $lockedBast->parties()
+                    ->where(
+                        'party_type',
+                        BastParty::TYPE_FIRST_PARTY,
+                    )
+                    ->exists()
+                || ! $lockedBast->parties()
+                    ->where(
+                        'party_type',
+                        BastParty::TYPE_SECOND_PARTY,
+                    )
+                    ->exists()
+            ) {
+                throw ValidationException::withMessages([
+                    'bast' => 'Pihak Pertama dan Pihak Kedua wajib tersedia sebelum finalisasi.',
+                ]);
+            }
+
+            if (! $lockedBast->items()->exists()) {
+                throw ValidationException::withMessages([
+                    'bast' => 'Minimal satu item wajib tersedia sebelum finalisasi.',
+                ]);
+            }
+
+            $year = $lockedBast->document_year;
+            $month = $lockedBast->document_month;
+
+            if ($year === null || $month === null) {
+                throw new RuntimeException(
+                    'Tanggal dokumen BAST tidak valid.',
+                );
+            }
+
+            $documentCode = $this->documentCode();
+
+            $sequenceNumber = $this->nextSequenceNumber(
+                $documentCode,
+                $year,
+            );
+
+            $documentNumber = $this->formatDocumentNumber(
+                $sequenceNumber,
+                $documentCode,
+                $month,
+                $year,
+            );
+
+            $lockedBast->update([
+                'document_number' => $documentNumber,
+                'sequence_number' => $sequenceNumber,
+                'document_code' => $documentCode,
+
+                'status' => Bast::STATUS_FINALIZED,
+
+                'finalized_at' => now(),
+                'finalized_by' => $user->id,
+            ]);
+
+            $lockedBast->activityLogs()->create([
+                'user_id' => $user->id,
+                'action' => 'BAST_FINALIZED',
+
+                'description' => sprintf(
+                    'Memfinalisasi BAST "%s" dengan nomor %s.',
+                    $lockedBast->title,
+                    $documentNumber,
+                ),
+
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent,
+
+                'old_values' => [
+                    'status' => Bast::STATUS_DRAFT,
+                    'document_number' => null,
+                ],
+
+                'new_values' => [
+                    'status' => Bast::STATUS_FINALIZED,
+                    'document_number' => $documentNumber,
+                    'sequence_number' => $sequenceNumber,
+                ],
+            ]);
+
+            return $lockedBast->fresh() ?? $lockedBast;
+        });
+    }
+
+    public function deleteDraft(
+        User $user,
+        Bast $bast,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): void {
+        DB::transaction(function () use (
+            $user,
+            $bast,
+            $ipAddress,
+            $userAgent,
+        ): void {
+            $lockedBast = Bast::query()
+                ->whereKey($bast->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedBast->isDraft()) {
+                throw ValidationException::withMessages([
+                    'bast' => 'Hanya BAST berstatus Draft yang dapat dihapus.',
+                ]);
+            }
+
+            $lockedBast->activityLogs()->create([
+                'user_id' => $user->id,
+                'action' => 'BAST_DELETED',
+
+                'description' => sprintf(
+                    'Menghapus draft BAST "%s".',
+                    $lockedBast->title,
+                ),
+
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent,
+
+                'old_values' => [
+                    'title' => $lockedBast->title,
+                    'status' => $lockedBast->status,
+                ],
+
+                'new_values' => null,
+            ]);
+
+            $lockedBast->delete();
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveDepartmentId(
+        User $user,
+        array $data,
+    ): int {
+        $departmentId = $user->isStaff()
+            ? $user->department_id
+            : (int) $data['department_id'];
+
+        if ($departmentId === null) {
+            throw ValidationException::withMessages([
+                'department_id' => 'Akun Staff belum memiliki unit atau bidang.',
+            ]);
+        }
+
+        return $departmentId;
+    }
+
+    private function nextSequenceNumber(
+        string $documentCode,
+        int $year,
+    ): int {
+        $now = now();
+
+        DocumentSequence::query()->insertOrIgnore([
+            'document_code' => $documentCode,
+            'year' => $year,
+            'last_number' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $sequence = DocumentSequence::query()
+            ->where('document_code', $documentCode)
+            ->where('year', $year)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $nextNumber = $sequence->last_number + 1;
+
+        $sequence->update([
+            'last_number' => $nextNumber,
+        ]);
+
+        return $nextNumber;
+    }
+
+    private function formatDocumentNumber(
+        int $sequenceNumber,
+        string $documentCode,
+        int $month,
+        int $year,
+    ): string {
+        return sprintf(
+            '%03d/%s/%s/%s/%d',
+            $sequenceNumber,
+            $documentCode,
+            $this->institutionCode(),
+            $this->romanMonth($month),
+            $year,
+        );
+    }
+
+    private function documentCode(): string
+    {
+        $code = config('bast.document.code');
+
+        if (! is_string($code) || trim($code) === '') {
+            throw new RuntimeException(
+                'Konfigurasi kode dokumen BAST tidak valid.',
+            );
+        }
+
+        return strtoupper(trim($code));
+    }
+
+    private function institutionCode(): string
+    {
+        $code = config(
+            'bast.document.institution_code',
+        );
+
+        if (! is_string($code) || trim($code) === '') {
+            throw new RuntimeException(
+                'Konfigurasi kode instansi BAST tidak valid.',
+            );
+        }
+
+        return strtoupper(trim($code));
+    }
+
+    private function romanMonth(int $month): string
+    {
+        $months = [
+            1 => 'I',
+            2 => 'II',
+            3 => 'III',
+            4 => 'IV',
+            5 => 'V',
+            6 => 'VI',
+            7 => 'VII',
+            8 => 'VIII',
+            9 => 'IX',
+            10 => 'X',
+            11 => 'XI',
+            12 => 'XII',
+        ];
+
+        if (! isset($months[$month])) {
+            throw new InvalidArgumentException(
+                'Bulan dokumen tidak valid.',
+            );
+        }
+
+        return $months[$month];
     }
 
     private function createParties(
@@ -121,7 +400,10 @@ class BastService
 
             if (! is_array($party)) {
                 throw new InvalidArgumentException(
-                    sprintf('Party data for %s is invalid.', $type),
+                    sprintf(
+                        'Party data for %s is invalid.',
+                        $type,
+                    ),
                 );
             }
 
@@ -134,13 +416,18 @@ class BastService
                 'user_id' => $userId,
                 'party_type' => $type,
 
-                'name' => (string) ($party['name'] ?? ''),
+                'name' => (string) (
+                    $party['name'] ?? ''
+                ),
+
                 'nip' => $this->nullableString(
                     $party['nip'] ?? null,
                 ),
+
                 'position' => $this->nullableString(
                     $party['position'] ?? null,
                 ),
+
                 'department' => $this->nullableString(
                     $party['department'] ?? null,
                 ),
@@ -175,15 +462,17 @@ class BastService
                 );
             }
 
-            $categoryId = isset($item['item_category_id'])
-                && $item['item_category_id'] !== ''
-                    ? (int) $item['item_category_id']
-                    : null;
+            $categoryId = isset(
+                $item['item_category_id'],
+            ) && $item['item_category_id'] !== ''
+                ? (int) $item['item_category_id']
+                : null;
 
-            $unitId = isset($item['unit_id'])
-                && $item['unit_id'] !== ''
-                    ? (int) $item['unit_id']
-                    : null;
+            $unitId = isset(
+                $item['unit_id'],
+            ) && $item['unit_id'] !== ''
+                ? (int) $item['unit_id']
+                : null;
 
             $value = isset($item['value'])
                 && $item['value'] !== ''
@@ -194,7 +483,9 @@ class BastService
                 'item_category_id' => $categoryId,
                 'unit_id' => $unitId,
 
-                'name' => (string) ($item['name'] ?? ''),
+                'name' => (string) (
+                    $item['name'] ?? ''
+                ),
 
                 'code' => $this->nullableString(
                     $item['code'] ?? null,
@@ -227,8 +518,9 @@ class BastService
         }
     }
 
-    private function nullableString(mixed $value): ?string
-    {
+    private function nullableString(
+        mixed $value,
+    ): ?string {
         if ($value === null || $value === '') {
             return null;
         }

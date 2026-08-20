@@ -1,11 +1,23 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
+    FileCheck2,
     FileText,
     Package,
     Paperclip,
+    Trash2,
     UserRound,
 } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 type Party = {
     id: number;
@@ -28,10 +40,12 @@ type Item = {
     condition: string | null;
     value: string | null;
     description: string | null;
+
     item_category: {
         id: number;
         name: string;
     } | null;
+
     unit: {
         id: number;
         name: string;
@@ -49,23 +63,40 @@ type BastDetail = {
     handover_place: string;
     status: string;
     created_at: string;
+    finalized_at: string | null;
+
     bast_type: {
         id: number;
         name: string;
     } | null;
+
     department: {
         id: number;
         name: string;
         code: string;
     } | null;
+
     creator: {
         id: number;
         name: string;
         email: string;
     } | null;
+
+    finalized_by: {
+        id: number;
+        name: string;
+    } | null;
+
     parties: Party[];
     items: Item[];
     attachments: unknown[];
+};
+
+type Permissions = {
+    update: boolean;
+    delete: boolean;
+    finalize: boolean;
+    manageAttachments: boolean;
 };
 
 const statusStyles: Record<
@@ -79,18 +110,22 @@ const statusStyles: Record<
         label: 'Draft',
         className: 'bg-[#F1F3F5] text-[#63717C]',
     },
+
     finalized: {
         label: 'Finalized',
         className: 'bg-[#EAF3FA] text-[#1D5D8F]',
     },
+
     completed: {
         label: 'Selesai',
         className: 'bg-[#EAF6EF] text-[#287A4B]',
     },
+
     archived: {
         label: 'Diarsipkan',
         className: 'bg-[#EDF0F3] text-[#53616D]',
     },
+
     cancelled: {
         label: 'Dibatalkan',
         className: 'bg-[#FCECEC] text-[#B64040]',
@@ -98,11 +133,18 @@ const statusStyles: Record<
 };
 
 function formatDate(value: string): string {
+    const datePart = value.slice(0, 10);
+    const date = new Date(`${datePart}T00:00:00`);
+
+    if (Number.isNaN(date.getTime())) {
+        return '—';
+    }
+
     return new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: 'long',
         year: 'numeric',
-    }).format(new Date(`${value.slice(0, 10)}T00:00:00`));
+    }).format(date);
 }
 
 function formatCondition(value: string | null): string {
@@ -115,7 +157,19 @@ function formatCondition(value: string | null): string {
     return value ? (labels[value] ?? value) : '—';
 }
 
-export default function BastShow({ bast }: { bast: BastDetail }) {
+export default function BastShow({
+    bast,
+    permissions,
+}: {
+    bast: BastDetail;
+    permissions: Permissions;
+}) {
+    const [finalizeOpen, setFinalizeOpen] = useState(false);
+
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    const [processingAction, setProcessingAction] = useState(false);
+
     const status = statusStyles[bast.status] ?? statusStyles.draft;
 
     const firstParty = bast.parties.find(
@@ -125,6 +179,40 @@ export default function BastShow({ bast }: { bast: BastDetail }) {
     const secondParty = bast.parties.find(
         (party) => party.party_type === 'second_party',
     );
+
+    const finalizeBast = () => {
+        setProcessingAction(true);
+
+        router.post(
+            `/bast/${bast.uuid}/finalize`,
+            {},
+            {
+                preserveScroll: true,
+
+                onSuccess: () => {
+                    setFinalizeOpen(false);
+                },
+
+                onFinish: () => {
+                    setProcessingAction(false);
+                },
+            },
+        );
+    };
+
+    const deleteBast = () => {
+        setProcessingAction(true);
+
+        router.delete(`/bast/${bast.uuid}`, {
+            onSuccess: () => {
+                setDeleteOpen(false);
+            },
+
+            onFinish: () => {
+                setProcessingAction(false);
+            },
+        });
+    };
 
     return (
         <>
@@ -149,7 +237,7 @@ export default function BastShow({ bast }: { bast: BastDetail }) {
                                     {status.label}
                                 </span>
 
-                                <span className="text-xs text-[#87949F]">
+                                <span className="font-mono text-xs text-[#87949F]">
                                     {bast.document_number ?? 'Belum bernomor'}
                                 </span>
                             </div>
@@ -162,6 +250,33 @@ export default function BastShow({ bast }: { bast: BastDetail }) {
                                 Dibuat oleh {bast.creator?.name ?? '—'}
                             </p>
                         </div>
+
+                        {(permissions.finalize || permissions.delete) && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                {permissions.finalize && (
+                                    <Button
+                                        type="button"
+                                        onClick={() => setFinalizeOpen(true)}
+                                        className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
+                                    >
+                                        <FileCheck2 className="size-4" />
+                                        Finalisasi BAST
+                                    </Button>
+                                )}
+
+                                {permissions.delete && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setDeleteOpen(true)}
+                                        className="h-10 border-[#E3CACA] bg-white px-4 text-[#B44949] shadow-none hover:bg-[#FFF6F6] hover:text-[#A53E3E]"
+                                    >
+                                        <Trash2 className="size-4" />
+                                        Hapus Draft
+                                    </Button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-7 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -305,6 +420,14 @@ export default function BastShow({ bast }: { bast: BastDetail }) {
                                     />
 
                                     <DetailRow
+                                        label="Nomor Dokumen"
+                                        value={
+                                            bast.document_number ??
+                                            'Belum bernomor'
+                                        }
+                                    />
+
+                                    <DetailRow
                                         label="Jumlah Item"
                                         value={String(bast.items.length)}
                                     />
@@ -335,6 +458,88 @@ export default function BastShow({ bast }: { bast: BastDetail }) {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
+                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                    <DialogHeader>
+                        <DialogTitle className="text-[#17212B]">
+                            Finalisasi BAST?
+                        </DialogTitle>
+
+                        <DialogDescription className="leading-6 text-[#71808C]">
+                            Setelah difinalisasi, nomor dokumen akan dibuat dan
+                            isi BAST dikunci dari perubahan biasa.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-lg border border-[#DCE8F0] bg-[#F5F9FC] px-4 py-3">
+                        <p className="text-xs leading-5 text-[#526675]">
+                            Pastikan informasi dokumen, pihak terkait, dan item
+                            sudah benar sebelum melanjutkan.
+                        </p>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={processingAction}
+                            onClick={() => setFinalizeOpen(false)}
+                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                        >
+                            Batal
+                        </Button>
+
+                        <Button
+                            type="button"
+                            disabled={processingAction}
+                            onClick={finalizeBast}
+                            className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                        >
+                            {processingAction
+                                ? 'Memfinalisasi...'
+                                : 'Ya, Finalisasi'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                    <DialogHeader>
+                        <DialogTitle className="text-[#17212B]">
+                            Hapus draft BAST?
+                        </DialogTitle>
+
+                        <DialogDescription className="leading-6 text-[#71808C]">
+                            Draft &quot;{bast.title}&quot; akan dihapus dari
+                            daftar BAST. Tindakan ini hanya tersedia selama
+                            dokumen masih Draft.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={processingAction}
+                            onClick={() => setDeleteOpen(false)}
+                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                        >
+                            Batal
+                        </Button>
+
+                        <Button
+                            type="button"
+                            disabled={processingAction}
+                            onClick={deleteBast}
+                            className="bg-[#B44949] text-white hover:bg-[#9E3D3D]"
+                        >
+                            {processingAction ? 'Menghapus...' : 'Hapus Draft'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
