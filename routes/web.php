@@ -6,6 +6,11 @@ use App\Http\Controllers\BastController;
 use App\Http\Controllers\BastDocumentController;
 use App\Http\Controllers\BastLifecycleController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Master\BastTypeController;
+use App\Http\Controllers\Master\DepartmentController;
+use App\Http\Controllers\Master\ItemCategoryController;
+use App\Http\Controllers\Master\UnitController;
+use App\Http\Controllers\MasterDataController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia(
@@ -119,15 +124,106 @@ Route::middleware([
     Route::middleware(
         'role:super-admin,admin',
     )->group(function () {
-        Route::inertia(
+        Route::get(
             'master',
-            'module-placeholder',
-            [
-                'title' => 'Data Master',
-                'description' => 'Pengelolaan jenis BAST, kategori item, satuan, dan data master lainnya sedang dipersiapkan.',
-                'href' => '/master',
-            ],
+            MasterDataController::class,
         )->name('master.index');
+
+        Route::post(
+            'master/bast-types',
+            [
+                BastTypeController::class,
+                'store',
+            ],
+        )->name('master.bast-types.store');
+
+        Route::put(
+            'master/bast-types/{bastType}',
+            [
+                BastTypeController::class,
+                'update',
+            ],
+        )->name('master.bast-types.update');
+
+        Route::patch(
+            'master/bast-types/{bastType}/toggle',
+            [
+                BastTypeController::class,
+                'toggle',
+            ],
+        )->name('master.bast-types.toggle');
+
+        Route::post(
+            'master/departments',
+            [
+                DepartmentController::class,
+                'store',
+            ],
+        )->name('master.departments.store');
+
+        Route::put(
+            'master/departments/{department}',
+            [
+                DepartmentController::class,
+                'update',
+            ],
+        )->name('master.departments.update');
+
+        Route::patch(
+            'master/departments/{department}/toggle',
+            [
+                DepartmentController::class,
+                'toggle',
+            ],
+        )->name('master.departments.toggle');
+
+        Route::post(
+            'master/item-categories',
+            [
+                ItemCategoryController::class,
+                'store',
+            ],
+        )->name('master.item-categories.store');
+
+        Route::put(
+            'master/item-categories/{itemCategory}',
+            [
+                ItemCategoryController::class,
+                'update',
+            ],
+        )->name('master.item-categories.update');
+
+        Route::patch(
+            'master/item-categories/{itemCategory}/toggle',
+            [
+                ItemCategoryController::class,
+                'toggle',
+            ],
+        )->name('master.item-categories.toggle');
+
+        Route::post(
+            'master/units',
+            [
+                UnitController::class,
+                'store',
+            ],
+        )->name('master.units.store');
+
+        Route::put(
+            'master/units/{unit}',
+            [
+                UnitController::class,
+                'update',
+            ],
+        )->name('master.units.update');
+
+        Route::patch(
+            'master/units/{unit}/toggle',
+            [
+                UnitController::class,
+                'toggle',
+            ],
+        )->name('master.units.toggle');
 
         Route::inertia(
             'activity-logs',
