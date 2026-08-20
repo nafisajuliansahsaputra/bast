@@ -1,25 +1,30 @@
 <?php
 
+use App\Http\Controllers\BastController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 
-Route::middleware(['auth', 'active', 'verified'])->group(function () {
-    Route::get('dashboard', DashboardController::class)
-        ->name('dashboard');
+Route::middleware([
+    'auth',
+    'active',
+    'verified',
+])->group(function () {
+    Route::get(
+        'dashboard',
+        DashboardController::class,
+    )->name('dashboard');
 
-    Route::inertia('bast', 'module-placeholder', [
-        'title' => 'Berita Acara',
-        'description' => 'Modul pengelolaan Berita Acara Serah Terima sedang dipersiapkan.',
-        'href' => '/bast',
-    ])->name('bast.index');
-
-    Route::inertia('bast/create', 'module-placeholder', [
-        'title' => 'Buat Berita Acara',
-        'description' => 'Form pembuatan Berita Acara Serah Terima akan tersedia pada tahap berikutnya.',
-        'href' => '/bast/create',
-    ])->name('bast.create');
+    Route::resource(
+        'bast',
+        BastController::class,
+    )->only([
+        'index',
+        'create',
+        'store',
+        'show',
+    ]);
 
     Route::inertia('archive', 'module-placeholder', [
         'title' => 'Arsip',
@@ -27,7 +32,9 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         'href' => '/archive',
     ])->name('archive.index');
 
-    Route::middleware('role:super-admin,admin')->group(function () {
+    Route::middleware(
+        'role:super-admin,admin',
+    )->group(function () {
         Route::inertia('master', 'module-placeholder', [
             'title' => 'Data Master',
             'description' => 'Pengelolaan jenis BAST, kategori item, satuan, dan data master lainnya sedang dipersiapkan.',
@@ -41,7 +48,9 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         ])->name('activity-logs.index');
     });
 
-    Route::middleware('role:super-admin')->group(function () {
+    Route::middleware(
+        'role:super-admin',
+    )->group(function () {
         Route::inertia('users', 'module-placeholder', [
             'title' => 'Pengguna',
             'description' => 'Modul pengelolaan akun pengguna dan hak akses sedang dipersiapkan.',
