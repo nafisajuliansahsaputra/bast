@@ -1,5 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    Archive as ArchiveIcon,
+    CheckCircle2,
+    Download,
+    Eye,
+    RotateCcw,
+} from 'lucide-react';
+import {
     ArrowLeft,
     FileCheck2,
     FileText,
@@ -9,6 +16,15 @@ import {
     UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
+import {
+    pdf as pdfBast,
+    preview as previewBast,
+} from '@/actions/App/Http/Controllers/BastDocumentController';
+import {
+    archive as archiveBast,
+    complete as completeBast,
+    restore as restoreBast,
+} from '@/actions/App/Http/Controllers/BastLifecycleController';
 import { BastAttachmentPanel } from '@/components/bast/bast-attachment-panel';
 import type { BastAttachmentItem } from '@/components/bast/bast-attachment-panel';
 import { Button } from '@/components/ui/button';
@@ -99,6 +115,11 @@ type Permissions = {
     delete: boolean;
     finalize: boolean;
     manageAttachments: boolean;
+    complete: boolean;
+    archive: boolean;
+    restoreArchive: boolean;
+    previewDocument: boolean;
+    downloadPdf: boolean;
 };
 
 const statusStyles: Record<
@@ -218,7 +239,14 @@ export default function BastShow({
     };
 
     const hasActions =
-        permissions.update || permissions.finalize || permissions.delete;
+        permissions.update ||
+        permissions.finalize ||
+        permissions.delete ||
+        permissions.complete ||
+        permissions.archive ||
+        permissions.restoreArchive ||
+        permissions.previewDocument ||
+        permissions.downloadPdf;
 
     return (
         <>
@@ -270,6 +298,88 @@ export default function BastShow({
                                             <PencilLine className="size-4" />
                                             Edit Draft
                                         </Link>
+                                    </Button>
+                                )}
+
+                                {permissions.previewDocument && (
+                                    <Button
+                                        asChild
+                                        type="button"
+                                        variant="outline"
+                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9]"
+                                    >
+                                        <a
+                                            href={previewBast.url(bast.uuid)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <Eye className="size-4" />
+                                            Preview
+                                        </a>
+                                    </Button>
+                                )}
+
+                                {permissions.downloadPdf && (
+                                    <Button
+                                        asChild
+                                        type="button"
+                                        variant="outline"
+                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9]"
+                                    >
+                                        <a
+                                            href={pdfBast.url(bast.uuid)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <Download className="size-4" />
+                                            PDF
+                                        </a>
+                                    </Button>
+                                )}
+
+                                {permissions.complete && (
+                                    <Button
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(
+                                                completeBast.url(bast.uuid),
+                                            )
+                                        }
+                                        className="h-10 bg-[#287A4B] px-4 text-white shadow-none hover:bg-[#21653E]"
+                                    >
+                                        <CheckCircle2 className="size-4" />
+                                        Tandai Selesai
+                                    </Button>
+                                )}
+
+                                {permissions.archive && (
+                                    <Button
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(
+                                                archiveBast.url(bast.uuid),
+                                            )
+                                        }
+                                        className="h-10 bg-[#53616D] px-4 text-white shadow-none hover:bg-[#45515B]"
+                                    >
+                                        <ArchiveIcon className="size-4" />
+                                        Arsipkan
+                                    </Button>
+                                )}
+
+                                {permissions.restoreArchive && (
+                                    <Button
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(
+                                                restoreBast.url(bast.uuid),
+                                            )
+                                        }
+                                        variant="outline"
+                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#1D5D8F] shadow-none hover:bg-[#EEF5FA]"
+                                    >
+                                        <RotateCcw className="size-4" />
+                                        Pulihkan
                                     </Button>
                                 )}
 

@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\BastAttachmentController;
 use App\Http\Controllers\BastController;
+use App\Http\Controllers\BastDocumentController;
+use App\Http\Controllers\BastLifecycleController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +30,46 @@ Route::middleware([
             'finalize',
         ],
     )->name('bast.finalize');
+
+    Route::post(
+        'bast/{bast}/complete',
+        [
+            BastLifecycleController::class,
+            'complete',
+        ],
+    )->name('bast.complete');
+
+    Route::post(
+        'bast/{bast}/archive',
+        [
+            BastLifecycleController::class,
+            'archive',
+        ],
+    )->name('bast.archive');
+
+    Route::post(
+        'bast/{bast}/restore',
+        [
+            BastLifecycleController::class,
+            'restore',
+        ],
+    )->name('bast.restore');
+
+    Route::get(
+        'bast/{bast}/preview',
+        [
+            BastDocumentController::class,
+            'preview',
+        ],
+    )->name('bast.preview');
+
+    Route::get(
+        'bast/{bast}/pdf',
+        [
+            BastDocumentController::class,
+            'pdf',
+        ],
+    )->name('bast.pdf');
 
     Route::post(
         'bast/{bast}/attachments',
@@ -65,13 +108,11 @@ Route::middleware([
         'destroy',
     ]);
 
-    Route::inertia(
+    Route::get(
         'archive',
-        'module-placeholder',
         [
-            'title' => 'Arsip',
-            'description' => 'Modul arsip dokumen Berita Acara Serah Terima sedang dipersiapkan.',
-            'href' => '/archive',
+            ArchiveController::class,
+            'index',
         ],
     )->name('archive.index');
 

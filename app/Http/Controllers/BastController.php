@@ -210,6 +210,8 @@ class BastController extends Controller
             'department:id,name,code',
             'creator:id,name,email',
             'finalizedBy:id,name',
+            'completedBy:id,name',
+            'archivedBy:id,name',
 
             'parties' => fn ($query) => $query
                 ->orderBy('sort_order'),
@@ -249,6 +251,31 @@ class BastController extends Controller
 
                     'manageAttachments' => Gate::allows(
                         'manageAttachments',
+                        $bast,
+                    ),
+
+                    'complete' => Gate::allows(
+                        'complete',
+                        $bast,
+                    ),
+
+                    'archive' => Gate::allows(
+                        'archive',
+                        $bast,
+                    ),
+
+                    'restoreArchive' => Gate::allows(
+                        'restoreArchive',
+                        $bast,
+                    ),
+
+                    'previewDocument' => Gate::allows(
+                        'previewDocument',
+                        $bast,
+                    ),
+
+                    'downloadPdf' => Gate::allows(
+                        'downloadPdf',
                         $bast,
                     ),
                 ],
