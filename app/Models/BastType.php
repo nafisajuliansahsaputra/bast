@@ -8,25 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'name',
-    'code',
+    'slug',
     'description',
     'is_active',
 ])]
-class Department extends Model
+class BastType extends Model
 {
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
         ];
-    }
-
-    /**
-     * @return HasMany<User, $this>
-     */
-    public function users(): HasMany
-    {
-        return $this->hasMany(User::class);
     }
 
     /**

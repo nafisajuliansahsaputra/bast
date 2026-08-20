@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'name',
-    'code',
+    'symbol',
     'description',
     'is_active',
 ])]
-class Department extends Model
+class Unit extends Model
 {
     protected function casts(): array
     {
@@ -22,18 +22,10 @@ class Department extends Model
     }
 
     /**
-     * @return HasMany<User, $this>
+     * @return HasMany<BastItem, $this>
      */
-    public function users(): HasMany
+    public function bastItems(): HasMany
     {
-        return $this->hasMany(User::class);
-    }
-
-    /**
-     * @return HasMany<Bast, $this>
-     */
-    public function basts(): HasMany
-    {
-        return $this->hasMany(Bast::class);
+        return $this->hasMany(BastItem::class);
     }
 }

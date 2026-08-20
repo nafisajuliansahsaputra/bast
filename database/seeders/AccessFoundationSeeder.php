@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class AccessFoundationSeeder extends Seeder
 {
@@ -48,12 +49,24 @@ class AccessFoundationSeeder extends Seeder
             ],
         );
 
+        $email = config('bast.super_admin.email');
+        $password = config('bast.super_admin.password');
+
+        if (! is_string($email) || $email === '') {
+            throw new RuntimeException(
+                'BAST super admin email configuration is invalid.',
+            );
+        }
+
+        if (! is_string($password) || $password === '') {
+            throw new RuntimeException(
+                'BAST super admin password configuration is invalid.',
+            );
+        }
+
         User::updateOrCreate(
             [
-                'email' => env(
-                    'BAST_SUPER_ADMIN_EMAIL',
-                    'admin@bast.test',
-                ),
+                'email' => $email,
             ],
             [
                 'name' => 'Super Admin BAST',
@@ -64,12 +77,7 @@ class AccessFoundationSeeder extends Seeder
                 'status' => 'active',
                 'role_id' => $superAdminRole->id,
                 'department_id' => $systemDepartment->id,
-                'password' => Hash::make(
-                    env(
-                        'BAST_SUPER_ADMIN_PASSWORD',
-                        'BastAdmin123!',
-                    ),
-                ),
+                'password' => Hash::make($password),
             ],
         );
     }

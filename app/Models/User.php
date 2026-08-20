@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -31,6 +32,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Role|null $role
+ * @property-read Department|null $department
  */
 #[Fillable([
     'role_id',
@@ -63,14 +66,76 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    /**
+     * @return BelongsTo<Role, $this>
+     */
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
     }
 
+    /**
+     * @return BelongsTo<Department, $this>
+     */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * @return HasMany<Bast, $this>
+     */
+    public function createdBasts(): HasMany
+    {
+        return $this->hasMany(Bast::class, 'created_by');
+    }
+
+    /**
+     * @return HasMany<Bast, $this>
+     */
+    public function finalizedBasts(): HasMany
+    {
+        return $this->hasMany(Bast::class, 'finalized_by');
+    }
+
+    /**
+     * @return HasMany<Bast, $this>
+     */
+    public function completedBasts(): HasMany
+    {
+        return $this->hasMany(Bast::class, 'completed_by');
+    }
+
+    /**
+     * @return HasMany<Bast, $this>
+     */
+    public function archivedBasts(): HasMany
+    {
+        return $this->hasMany(Bast::class, 'archived_by');
+    }
+
+    /**
+     * @return HasMany<Bast, $this>
+     */
+    public function cancelledBasts(): HasMany
+    {
+        return $this->hasMany(Bast::class, 'cancelled_by');
+    }
+
+    /**
+     * @return HasMany<BastAttachment, $this>
+     */
+    public function uploadedAttachments(): HasMany
+    {
+        return $this->hasMany(BastAttachment::class, 'uploaded_by');
+    }
+
+    /**
+     * @return HasMany<ActivityLog, $this>
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
     }
 
     public function hasRole(string ...$roles): bool
