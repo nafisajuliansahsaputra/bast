@@ -1,17 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     Archive as ArchiveIcon,
+    ArrowLeft,
     CheckCircle2,
     Download,
     Eye,
-    RotateCcw,
-} from 'lucide-react';
-import {
-    ArrowLeft,
     FileCheck2,
     FileText,
     Package,
     PencilLine,
+    RotateCcw,
     Trash2,
     UserRound,
 } from 'lucide-react';
@@ -122,6 +120,8 @@ type Permissions = {
     downloadPdf: boolean;
 };
 
+type LifecycleAction = 'complete' | 'archive' | 'restore';
+
 const statusStyles: Record<
     string,
     {
@@ -152,6 +152,48 @@ const statusStyles: Record<
     cancelled: {
         label: 'Dibatalkan',
         className: 'bg-[#FCECEC] text-[#B64040]',
+    },
+};
+
+const lifecycleDialogContent: Record<
+    LifecycleAction,
+    {
+        title: string;
+        description: string;
+        note: string;
+        confirmLabel: string;
+        processingLabel: string;
+        confirmClassName: string;
+    }
+> = {
+    complete: {
+        title: 'Tandai BAST sebagai selesai?',
+        description:
+            'Status dokumen akan berubah dari Finalized menjadi Selesai.',
+        note: 'Gunakan tindakan ini setelah proses serah terima benar-benar telah selesai dilaksanakan.',
+        confirmLabel: 'Ya, Tandai Selesai',
+        processingLabel: 'Menyelesaikan...',
+        confirmClassName: 'bg-[#287A4B] text-white hover:bg-[#21653E]',
+    },
+
+    archive: {
+        title: 'Arsipkan BAST?',
+        description:
+            'Dokumen yang sudah selesai akan dipindahkan ke arsip BAST.',
+        note: 'Dokumen tetap tersimpan dan dapat dilihat kembali melalui menu Arsip.',
+        confirmLabel: 'Ya, Arsipkan',
+        processingLabel: 'Mengarsipkan...',
+        confirmClassName: 'bg-[#53616D] text-white hover:bg-[#45515B]',
+    },
+
+    restore: {
+        title: 'Pulihkan dari arsip?',
+        description:
+            'Dokumen akan dikeluarkan dari arsip dan dikembalikan ke status Selesai.',
+        note: 'Nomor dokumen dan seluruh isi BAST tetap dipertahankan.',
+        confirmLabel: 'Ya, Pulihkan',
+        processingLabel: 'Memulihkan...',
+        confirmClassName: 'bg-[#1D5D8F] text-white hover:bg-[#174C76]',
     },
 };
 
@@ -191,6 +233,9 @@ export default function BastShow({
     const [finalizeOpen, setFinalizeOpen] = useState(false);
 
     const [deleteOpen, setDeleteOpen] = useState(false);
+
+    const [lifecycleAction, setLifecycleAction] =
+        useState<LifecycleAction | null>(null);
 
     const [processingAction, setProcessingAction] = useState(false);
 
@@ -238,6 +283,37 @@ export default function BastShow({
         });
     };
 
+    const runLifecycleAction = () => {
+        if (!lifecycleAction) {
+            return;
+        }
+
+        setProcessingAction(true);
+
+        const url =
+            lifecycleAction === 'complete'
+                ? completeBast.url(bast.uuid)
+                : lifecycleAction === 'archive'
+                  ? archiveBast.url(bast.uuid)
+                  : restoreBast.url(bast.uuid);
+
+        router.post(
+            url,
+            {},
+            {
+                preserveScroll: true,
+
+                onSuccess: () => {
+                    setLifecycleAction(null);
+                },
+
+                onFinish: () => {
+                    setProcessingAction(false);
+                },
+            },
+        );
+    };
+
     const hasActions =
         permissions.update ||
         permissions.finalize ||
@@ -247,6 +323,10 @@ export default function BastShow({
         permissions.restoreArchive ||
         permissions.previewDocument ||
         permissions.downloadPdf;
+
+    const activeLifecycleDialog = lifecycleAction
+        ? lifecycleDialogContent[lifecycleAction]
+        : null;
 
     return (
         <>
@@ -341,9 +421,7 @@ export default function BastShow({
                                     <Button
                                         type="button"
                                         onClick={() =>
-                                            router.post(
-                                                completeBast.url(bast.uuid),
-                                            )
+                                            setLifecycleAction('complete')
                                         }
                                         className="h-10 bg-[#287A4B] px-4 text-white shadow-none hover:bg-[#21653E]"
                                     >
@@ -356,9 +434,7 @@ export default function BastShow({
                                     <Button
                                         type="button"
                                         onClick={() =>
-                                            router.post(
-                                                archiveBast.url(bast.uuid),
-                                            )
+                                            setLifecycleAction('archive')
                                         }
                                         className="h-10 bg-[#53616D] px-4 text-white shadow-none hover:bg-[#45515B]"
                                     >
@@ -371,9 +447,7 @@ export default function BastShow({
                                     <Button
                                         type="button"
                                         onClick={() =>
-                                            router.post(
-                                                restoreBast.url(bast.uuid),
-                                            )
+                                            setLifecycleAction('restore')
                                         }
                                         variant="outline"
                                         className="h-10 border-[#D7DEE4] bg-white px-4 text-[#1D5D8F] shadow-none hover:bg-[#EEF5FA]"
@@ -632,9 +706,8 @@ export default function BastShow({
                         </DialogTitle>
 
                         <DialogDescription className="leading-6 text-[#71808C]">
-                            Draft &quot;
-                            {bast.title}
-                            &quot; akan dihapus dari daftar BAST.
+                            Draft &quot;{bast.title}&quot; akan dihapus dari
+                            daftar BAST.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -656,6 +729,59 @@ export default function BastShow({
                             className="bg-[#B44949] text-white hover:bg-[#9E3D3D]"
                         >
                             {processingAction ? 'Menghapus...' : 'Hapus Draft'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={lifecycleAction !== null}
+                onOpenChange={(open) => {
+                    if (!open && !processingAction) {
+                        setLifecycleAction(null);
+                    }
+                }}
+            >
+                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                    <DialogHeader>
+                        <DialogTitle className="text-[#17212B]">
+                            {activeLifecycleDialog?.title}
+                        </DialogTitle>
+
+                        <DialogDescription className="leading-6 text-[#71808C]">
+                            {activeLifecycleDialog?.description}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-lg border border-[#DCE3E8] bg-[#F7F9FA] px-4 py-3">
+                        <p className="text-xs leading-5 text-[#5D6B76]">
+                            {activeLifecycleDialog?.note}
+                        </p>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={processingAction}
+                            onClick={() => setLifecycleAction(null)}
+                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                        >
+                            Batal
+                        </Button>
+
+                        <Button
+                            type="button"
+                            disabled={processingAction}
+                            onClick={runLifecycleAction}
+                            className={
+                                activeLifecycleDialog?.confirmClassName ??
+                                'bg-[#1D5D8F] text-white hover:bg-[#174C76]'
+                            }
+                        >
+                            {processingAction
+                                ? activeLifecycleDialog?.processingLabel
+                                : activeLifecycleDialog?.confirmLabel}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
