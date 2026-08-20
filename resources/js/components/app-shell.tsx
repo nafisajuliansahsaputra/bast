@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import type { AppVariant } from '@/types';
 
@@ -17,5 +17,17 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
         );
     }
 
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return (
+        <SidebarProvider
+            defaultOpen={isOpen}
+            style={
+                {
+                    '--sidebar-width': '15.5rem',
+                } as CSSProperties
+            }
+            className="bg-[#F5F7F9]"
+        >
+            {children}
+        </SidebarProvider>
+    );
 }

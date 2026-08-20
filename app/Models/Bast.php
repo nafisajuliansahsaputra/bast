@@ -8,8 +8,42 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property string|null $document_number
+ * @property int|null $sequence_number
+ * @property string $document_code
+ * @property int|null $document_month
+ * @property int|null $document_year
+ * @property int $bast_type_id
+ * @property int $department_id
+ * @property int $created_by
+ * @property string $title
+ * @property string|null $description
+ * @property Carbon $document_date
+ * @property Carbon $handover_date
+ * @property string $handover_place
+ * @property string $status
+ * @property Carbon|null $finalized_at
+ * @property int|null $finalized_by
+ * @property Carbon|null $completed_at
+ * @property int|null $completed_by
+ * @property Carbon|null $archived_at
+ * @property int|null $archived_by
+ * @property Carbon|null $cancelled_at
+ * @property int|null $cancelled_by
+ * @property string|null $cancellation_reason
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read BastType|null $bastType
+ * @property-read Department|null $department
+ * @property-read User|null $creator
+ */
 #[Fillable([
     'document_number',
     'sequence_number',
