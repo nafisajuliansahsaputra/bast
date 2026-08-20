@@ -1,0 +1,76 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Department;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class AccessFoundationSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $superAdminRole = Role::updateOrCreate(
+            ['slug' => 'super-admin'],
+            [
+                'name' => 'Super Admin',
+                'description' => 'Memiliki akses penuh terhadap seluruh fitur dan konfigurasi sistem BAST.',
+                'is_active' => true,
+            ],
+        );
+
+        Role::updateOrCreate(
+            ['slug' => 'admin'],
+            [
+                'name' => 'Admin',
+                'description' => 'Mengelola operasional berita acara, arsip, pengguna, dan data master.',
+                'is_active' => true,
+            ],
+        );
+
+        Role::updateOrCreate(
+            ['slug' => 'staff'],
+            [
+                'name' => 'Staff',
+                'description' => 'Membuat dan mengelola berita acara sesuai hak akses yang diberikan.',
+                'is_active' => true,
+            ],
+        );
+
+        $systemDepartment = Department::updateOrCreate(
+            ['code' => 'SYS'],
+            [
+                'name' => 'Administrasi Sistem',
+                'description' => 'Unit default untuk akun administrator pada lingkungan pengembangan.',
+                'is_active' => true,
+            ],
+        );
+
+        User::updateOrCreate(
+            [
+                'email' => env(
+                    'BAST_SUPER_ADMIN_EMAIL',
+                    'admin@bast.test',
+                ),
+            ],
+            [
+                'name' => 'Super Admin BAST',
+                'nip' => null,
+                'email_verified_at' => now(),
+                'position' => 'Administrator Sistem',
+                'phone' => null,
+                'status' => 'active',
+                'role_id' => $superAdminRole->id,
+                'department_id' => $systemDepartment->id,
+                'password' => Hash::make(
+                    env(
+                        'BAST_SUPER_ADMIN_PASSWORD',
+                        'BastAdmin123!',
+                    ),
+                ),
+            ],
+        );
+    }
+}
