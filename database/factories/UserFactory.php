@@ -12,22 +12,20 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
+            'role_id' => null,
+            'department_id' => null,
             'name' => fake()->name(),
+            'nip' => null,
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            'position' => null,
+            'phone' => null,
+            'status' => 'active',
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
@@ -36,9 +34,6 @@ class UserFactory extends Factory
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -46,14 +41,20 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the model has two-factor authentication configured.
-     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'inactive',
+        ]);
+    }
+
     public function withTwoFactor(): static
     {
         return $this->state(fn (array $attributes) => [
             'two_factor_secret' => encrypt('secret'),
-            'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
+            'two_factor_recovery_codes' => encrypt(
+                json_encode(['recovery-code-1']),
+            ),
             'two_factor_confirmed_at' => now(),
         ]);
     }
