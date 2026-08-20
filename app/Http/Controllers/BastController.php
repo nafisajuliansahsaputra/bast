@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBastRequest;
+use App\Http\Requests\UpdateBastRequest;
 use App\Models\Bast;
 use App\Models\BastType;
 use App\Models\Department;
@@ -27,33 +28,10 @@ class BastController extends Controller
 
         abort_unless($user instanceof User, 403);
 
-        $search = trim(
-            (string) $request->query(
-                'search',
-                '',
-            ),
-        );
-
-        $status = trim(
-            (string) $request->query(
-                'status',
-                '',
-            ),
-        );
-
-        $type = trim(
-            (string) $request->query(
-                'type',
-                '',
-            ),
-        );
-
-        $year = trim(
-            (string) $request->query(
-                'year',
-                '',
-            ),
-        );
+        $search = trim((string) $request->query('search', ''));
+        $status = trim((string) $request->query('status', ''));
+        $type = trim((string) $request->query('type', ''));
+        $year = trim((string) $request->query('year', ''));
 
         $years = $this->visibleBasts($user)
             ->whereNotNull('document_year')
@@ -126,33 +104,18 @@ class BastController extends Controller
             Bast::STATUS_CANCELLED,
         ];
 
-        if (
-            in_array(
-                $status,
-                $allowedStatuses,
-                true,
-            )
-        ) {
-            $query->where(
-                'status',
-                $status,
-            );
+        if (in_array($status, $allowedStatuses, true)) {
+            $query->where('status', $status);
         }
 
-        if (
-            $type !== ''
-            && ctype_digit($type)
-        ) {
+        if ($type !== '' && ctype_digit($type)) {
             $query->where(
                 'bast_type_id',
                 (int) $type,
             );
         }
 
-        if (
-            $year !== ''
-            && ctype_digit($year)
-        ) {
+        if ($year !== '' && ctype_digit($year)) {
             $query->where(
                 'document_year',
                 (int) $year,
@@ -177,10 +140,7 @@ class BastController extends Controller
                 ],
 
                 'bastTypes' => BastType::query()
-                    ->where(
-                        'is_active',
-                        true,
-                    )
+                    ->where('is_active', true)
                     ->orderBy('name')
                     ->get([
                         'id',
@@ -202,71 +162,11 @@ class BastController extends Controller
 
         $user = $request->user();
 
-        abort_unless(
-            $user instanceof User,
-            403,
-        );
-
-        $departments = Department::query()
-            ->where(
-                'is_active',
-                true,
-            )
-            ->orderBy('name');
-
-        if ($user->isStaff()) {
-            $departments->whereKey(
-                $user->department_id,
-            );
-        }
+        abort_unless($user instanceof User, 403);
 
         return Inertia::render(
             'bast/create',
-            [
-                'bastTypes' => BastType::query()
-                    ->where(
-                        'is_active',
-                        true,
-                    )
-                    ->orderBy('name')
-                    ->get([
-                        'id',
-                        'name',
-                    ]),
-
-                'departments' => $departments
-                    ->get([
-                        'id',
-                        'name',
-                        'code',
-                    ]),
-
-                'itemCategories' => ItemCategory::query()
-                    ->where(
-                        'is_active',
-                        true,
-                    )
-                    ->orderBy('name')
-                    ->get([
-                        'id',
-                        'name',
-                    ]),
-
-                'units' => Unit::query()
-                    ->where(
-                        'is_active',
-                        true,
-                    )
-                    ->orderBy('name')
-                    ->get([
-                        'id',
-                        'name',
-                        'symbol',
-                    ]),
-
-                'defaultDepartmentId' => $user
-                    ->department_id,
-            ],
+            $this->formOptions($user),
         );
     }
 
@@ -276,10 +176,7 @@ class BastController extends Controller
     ): RedirectResponse {
         $user = $request->user();
 
-        abort_unless(
-            $user instanceof User,
-            403,
-        );
+        abort_unless($user instanceof User, 403);
 
         $bast = $bastService->createDraft(
             $user,
@@ -310,11 +207,8 @@ class BastController extends Controller
 
         $bast->load([
             'bastType:id,name',
-
             'department:id,name,code',
-
             'creator:id,name,email',
-
             'finalizedBy:id,name',
 
             'parties' => fn ($query) => $query
@@ -327,7 +221,9 @@ class BastController extends Controller
                 ])
                 ->orderBy('sort_order'),
 
-            'attachments',
+            'attachments' => fn ($query) => $query
+                ->with('uploader:id,name')
+                ->latest('created_at'),
         ]);
 
         return Inertia::render(
@@ -360,6 +256,64 @@ class BastController extends Controller
         );
     }
 
+    public function edit(
+        Request $request,
+        Bast $bast,
+    ): Response {
+        Gate::authorize(
+            'update',
+            $bast,
+        );
+
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 403);
+
+        $bast->load([
+            'parties' => fn ($query) => $query
+                ->orderBy('sort_order'),
+
+            'items' => fn ($query) => $query
+                ->orderBy('sort_order'),
+        ]);
+
+        return Inertia::render(
+            'bast/edit',
+            [
+                'bast' => $bast,
+                ...$this->formOptions($user),
+            ],
+        );
+    }
+
+    public function update(
+        UpdateBastRequest $request,
+        Bast $bast,
+        BastService $bastService,
+    ): RedirectResponse {
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 403);
+
+        $bast = $bastService->updateDraft(
+            $user,
+            $bast,
+            $request->validated(),
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return redirect()
+            ->route(
+                'bast.show',
+                $bast,
+            )
+            ->with(
+                'success',
+                'Draft BAST berhasil diperbarui.',
+            );
+    }
+
     public function finalize(
         Request $request,
         Bast $bast,
@@ -372,10 +326,7 @@ class BastController extends Controller
 
         $user = $request->user();
 
-        abort_unless(
-            $user instanceof User,
-            403,
-        );
+        abort_unless($user instanceof User, 403);
 
         $bast = $bastService->finalize(
             $user,
@@ -407,10 +358,7 @@ class BastController extends Controller
 
         $user = $request->user();
 
-        abort_unless(
-            $user instanceof User,
-            403,
-        );
+        abort_unless($user instanceof User, 403);
 
         $bastService->deleteDraft(
             $user,
@@ -425,6 +373,63 @@ class BastController extends Controller
                 'success',
                 'Draft BAST berhasil dihapus.',
             );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formOptions(
+        User $user,
+    ): array {
+        $departments = Department::query()
+            ->where(
+                'is_active',
+                true,
+            )
+            ->orderBy('name');
+
+        if ($user->isStaff()) {
+            $departments->whereKey(
+                $user->department_id,
+            );
+        }
+
+        return [
+            'bastTypes' => BastType::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'name',
+                ]),
+
+            'departments' => $departments
+                ->get([
+                    'id',
+                    'name',
+                    'code',
+                ]),
+
+            'itemCategories' => ItemCategory::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'name',
+                ]),
+
+            'units' => Unit::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'name',
+                    'symbol',
+                ]),
+
+            'defaultDepartmentId' => $user
+                ->department_id,
+        ];
     }
 
     /**

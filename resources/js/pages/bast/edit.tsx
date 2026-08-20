@@ -1,0 +1,1176 @@
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import {
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    FileCheck2,
+    FileText,
+    PackagePlus,
+    Plus,
+    Trash2,
+    UsersRound,
+} from 'lucide-react';
+import { useState } from 'react';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+type SelectOption = {
+    id: number;
+    name: string;
+};
+
+type Department = SelectOption & {
+    code: string;
+};
+
+type Unit = SelectOption & {
+    symbol: string | null;
+};
+
+type PartyRecord = {
+    user_id: number | null;
+    party_type: string;
+    name: string;
+    nip: string | null;
+    position: string | null;
+    department: string | null;
+    institution: string;
+    address: string | null;
+};
+
+type ItemRecord = {
+    item_category_id: number | null;
+    unit_id: number | null;
+    name: string;
+    code: string | null;
+    inventory_number: string | null;
+    serial_number: string | null;
+    quantity: string | number;
+    condition: string | null;
+    value: string | number | null;
+    description: string | null;
+};
+
+type BastRecord = {
+    uuid: string;
+    bast_type_id: number;
+    department_id: number;
+    title: string;
+    description: string | null;
+    document_date: string;
+    handover_date: string;
+    handover_place: string;
+    parties: PartyRecord[];
+    items: ItemRecord[];
+};
+
+type PartyForm = {
+    user_id: string;
+    name: string;
+    nip: string;
+    position: string;
+    department: string;
+    institution: string;
+    address: string;
+};
+
+type ItemForm = {
+    item_category_id: string;
+    unit_id: string;
+    name: string;
+    code: string;
+    inventory_number: string;
+    serial_number: string;
+    quantity: string;
+    condition: string;
+    value: string;
+    description: string;
+};
+
+type BastForm = {
+    bast_type_id: string;
+    department_id: string;
+    title: string;
+    description: string;
+    document_date: string;
+    handover_date: string;
+    handover_place: string;
+
+    parties: {
+        first_party: PartyForm;
+        second_party: PartyForm;
+    };
+
+    items: ItemForm[];
+};
+
+type Props = {
+    bast: BastRecord;
+    bastTypes: SelectOption[];
+    departments: Department[];
+    itemCategories: SelectOption[];
+    units: Unit[];
+    defaultDepartmentId: number | null;
+};
+
+const steps = [
+    {
+        title: 'Informasi',
+        icon: FileText,
+    },
+    {
+        title: 'Pihak Terkait',
+        icon: UsersRound,
+    },
+    {
+        title: 'Item',
+        icon: PackagePlus,
+    },
+    {
+        title: 'Review',
+        icon: FileCheck2,
+    },
+];
+
+const emptyParty = (): PartyForm => ({
+    user_id: '',
+    name: '',
+    nip: '',
+    position: '',
+    department: '',
+    institution: '',
+    address: '',
+});
+
+const emptyItem = (): ItemForm => ({
+    item_category_id: '',
+    unit_id: '',
+    name: '',
+    code: '',
+    inventory_number: '',
+    serial_number: '',
+    quantity: '1',
+    condition: 'baik',
+    value: '',
+    description: '',
+});
+
+function partyToForm(party?: PartyRecord): PartyForm {
+    if (!party) {
+        return emptyParty();
+    }
+
+    return {
+        user_id: party.user_id !== null ? String(party.user_id) : '',
+        name: party.name ?? '',
+        nip: party.nip ?? '',
+        position: party.position ?? '',
+        department: party.department ?? '',
+        institution: party.institution ?? '',
+        address: party.address ?? '',
+    };
+}
+
+function itemToForm(item: ItemRecord): ItemForm {
+    return {
+        item_category_id:
+            item.item_category_id !== null ? String(item.item_category_id) : '',
+
+        unit_id: item.unit_id !== null ? String(item.unit_id) : '',
+
+        name: item.name ?? '',
+        code: item.code ?? '',
+        inventory_number: item.inventory_number ?? '',
+        serial_number: item.serial_number ?? '',
+        quantity: String(item.quantity),
+        condition: item.condition ?? 'baik',
+
+        value: item.value !== null ? String(item.value) : '',
+
+        description: item.description ?? '',
+    };
+}
+
+export default function BastEdit({
+    bast,
+    bastTypes,
+    departments,
+    itemCategories,
+    units,
+}: Props) {
+    const { auth } = usePage().props;
+
+    const [step, setStep] = useState(0);
+
+    const firstParty = bast.parties.find(
+        (party) => party.party_type === 'first_party',
+    );
+
+    const secondParty = bast.parties.find(
+        (party) => party.party_type === 'second_party',
+    );
+
+    const { data, setData, put, processing, errors } = useForm<BastForm>({
+        bast_type_id: String(bast.bast_type_id),
+
+        department_id: String(bast.department_id),
+
+        title: bast.title,
+
+        description: bast.description ?? '',
+
+        document_date: bast.document_date.slice(0, 10),
+
+        handover_date: bast.handover_date.slice(0, 10),
+
+        handover_place: bast.handover_place,
+
+        parties: {
+            first_party: partyToForm(firstParty),
+
+            second_party: partyToForm(secondParty),
+        },
+
+        items:
+            bast.items.length > 0 ? bast.items.map(itemToForm) : [emptyItem()],
+    });
+
+    const validationErrors = errors as Record<string, string>;
+
+    const updateParty = (
+        party: 'first_party' | 'second_party',
+        field: keyof PartyForm,
+        value: string,
+    ) => {
+        setData('parties', {
+            ...data.parties,
+
+            [party]: {
+                ...data.parties[party],
+                [field]: value,
+            },
+        });
+    };
+
+    const updateItem = (
+        index: number,
+        field: keyof ItemForm,
+        value: string,
+    ) => {
+        setData(
+            'items',
+            data.items.map((item, itemIndex) =>
+                itemIndex === index
+                    ? {
+                          ...item,
+                          [field]: value,
+                      }
+                    : item,
+            ),
+        );
+    };
+
+    const addItem = () => {
+        setData('items', [...data.items, emptyItem()]);
+    };
+
+    const removeItem = (index: number) => {
+        if (data.items.length === 1) {
+            return;
+        }
+
+        setData(
+            'items',
+            data.items.filter((_, itemIndex) => itemIndex !== index),
+        );
+    };
+
+    const submit = () => {
+        put(`/bast/${bast.uuid}`, {
+            preserveScroll: true,
+        });
+    };
+
+    const selectedType = bastTypes.find(
+        (item) => String(item.id) === data.bast_type_id,
+    );
+
+    const selectedDepartment = departments.find(
+        (item) => String(item.id) === data.department_id,
+    );
+
+    return (
+        <>
+            <Head title={`Edit ${bast.title}`} />
+
+            <div className="flex flex-1 flex-col px-5 py-6 md:px-8 md:py-8">
+                <div className="mx-auto w-full max-w-[1200px]">
+                    <div>
+                        <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[#17212B]">
+                            Edit Draft BAST
+                        </h1>
+
+                        <p className="mt-1.5 text-sm text-[#71808C]">
+                            Perbarui informasi draft sebelum dokumen
+                            difinalisasi.
+                        </p>
+                    </div>
+
+                    <div className="mt-7 overflow-x-auto rounded-[10px] border border-[#DDE3E8] bg-white p-4">
+                        <div className="flex min-w-[620px] items-center">
+                            {steps.map((item, index) => {
+                                const Icon = item.icon;
+
+                                const completed = index < step;
+
+                                const active = index === step;
+
+                                return (
+                                    <div
+                                        key={item.title}
+                                        className="flex flex-1 items-center"
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(index)}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <span
+                                                className={`flex size-8 items-center justify-center rounded-full ${
+                                                    completed
+                                                        ? 'bg-[#EAF6EF] text-[#287A4B]'
+                                                        : active
+                                                          ? 'bg-[#1D5D8F] text-white'
+                                                          : 'bg-[#F1F4F6] text-[#85919B]'
+                                                }`}
+                                            >
+                                                {completed ? (
+                                                    <Check className="size-4" />
+                                                ) : (
+                                                    <Icon className="size-4" />
+                                                )}
+                                            </span>
+
+                                            <span
+                                                className={`text-xs font-medium ${
+                                                    active
+                                                        ? 'text-[#1D5D8F]'
+                                                        : 'text-[#71808C]'
+                                                }`}
+                                            >
+                                                {item.title}
+                                            </span>
+                                        </button>
+
+                                        {index < steps.length - 1 && (
+                                            <div className="mx-4 h-px flex-1 bg-[#E1E6EA]" />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[10px] border border-[#DDE3E8] bg-white">
+                        {step === 0 && (
+                            <div className="p-5 md:p-7">
+                                <SectionHeader
+                                    title="Informasi Dokumen"
+                                    description="Perbarui informasi utama dokumen BAST."
+                                />
+
+                                <div className="mt-6 grid gap-5 md:grid-cols-2">
+                                    <Field label="Jenis BAST">
+                                        <select
+                                            value={data.bast_type_id}
+                                            onChange={(event) =>
+                                                setData(
+                                                    'bast_type_id',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm outline-none focus:border-[#1D5D8F]"
+                                        >
+                                            <option value="">
+                                                Pilih jenis BAST
+                                            </option>
+
+                                            {bastTypes.map((item) => (
+                                                <option
+                                                    key={item.id}
+                                                    value={item.id}
+                                                >
+                                                    {item.name}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        <InputError
+                                            message={errors.bast_type_id}
+                                        />
+                                    </Field>
+
+                                    <Field label="Unit / Bidang">
+                                        <select
+                                            value={data.department_id}
+                                            disabled={
+                                                auth.user?.role?.slug ===
+                                                'staff'
+                                            }
+                                            onChange={(event) =>
+                                                setData(
+                                                    'department_id',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm outline-none focus:border-[#1D5D8F] disabled:bg-[#F5F7F9]"
+                                        >
+                                            <option value="">Pilih unit</option>
+
+                                            {departments.map((item) => (
+                                                <option
+                                                    key={item.id}
+                                                    value={item.id}
+                                                >
+                                                    {item.name}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        <InputError
+                                            message={errors.department_id}
+                                        />
+                                    </Field>
+
+                                    <div className="md:col-span-2">
+                                        <Field label="Judul / Perihal">
+                                            <Input
+                                                value={data.title}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'title',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="h-10 border-[#D7DEE4] shadow-none"
+                                            />
+
+                                            <InputError
+                                                message={errors.title}
+                                            />
+                                        </Field>
+                                    </div>
+
+                                    <Field label="Tanggal Dokumen">
+                                        <Input
+                                            type="date"
+                                            value={data.document_date}
+                                            onChange={(event) =>
+                                                setData(
+                                                    'document_date',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className="h-10 border-[#D7DEE4] shadow-none"
+                                        />
+
+                                        <InputError
+                                            message={errors.document_date}
+                                        />
+                                    </Field>
+
+                                    <Field label="Tanggal Serah Terima">
+                                        <Input
+                                            type="date"
+                                            value={data.handover_date}
+                                            onChange={(event) =>
+                                                setData(
+                                                    'handover_date',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className="h-10 border-[#D7DEE4] shadow-none"
+                                        />
+
+                                        <InputError
+                                            message={errors.handover_date}
+                                        />
+                                    </Field>
+
+                                    <div className="md:col-span-2">
+                                        <Field label="Tempat Serah Terima">
+                                            <Input
+                                                value={data.handover_place}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'handover_place',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="h-10 border-[#D7DEE4] shadow-none"
+                                            />
+
+                                            <InputError
+                                                message={errors.handover_place}
+                                            />
+                                        </Field>
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <Field label="Deskripsi / Keterangan">
+                                            <textarea
+                                                value={data.description}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'description',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                rows={4}
+                                                className="w-full resize-none rounded-lg border border-[#D7DEE4] px-3 py-2.5 text-sm outline-none focus:border-[#1D5D8F]"
+                                            />
+
+                                            <InputError
+                                                message={errors.description}
+                                            />
+                                        </Field>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 1 && (
+                            <div className="p-5 md:p-7">
+                                <SectionHeader
+                                    title="Pihak Terkait"
+                                    description="Perbarui pihak yang menyerahkan dan menerima."
+                                />
+
+                                <div className="mt-6 grid gap-5 xl:grid-cols-2">
+                                    <PartyCard
+                                        title="Pihak Pertama"
+                                        subtitle="Pihak yang menyerahkan"
+                                        party={data.parties.first_party}
+                                        errorPrefix="parties.first_party"
+                                        errors={validationErrors}
+                                        onChange={(field, value) =>
+                                            updateParty(
+                                                'first_party',
+                                                field,
+                                                value,
+                                            )
+                                        }
+                                    />
+
+                                    <PartyCard
+                                        title="Pihak Kedua"
+                                        subtitle="Pihak yang menerima"
+                                        party={data.parties.second_party}
+                                        errorPrefix="parties.second_party"
+                                        errors={validationErrors}
+                                        onChange={(field, value) =>
+                                            updateParty(
+                                                'second_party',
+                                                field,
+                                                value,
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 2 && (
+                            <div className="p-5 md:p-7">
+                                <div className="flex items-start justify-between gap-5">
+                                    <SectionHeader
+                                        title="Item Serah Terima"
+                                        description="Ubah, tambah, atau hapus item pada draft."
+                                    />
+
+                                    <Button
+                                        type="button"
+                                        onClick={addItem}
+                                        variant="outline"
+                                        className="shrink-0 border-[#D7DEE4] bg-white text-[#52616D]"
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Item
+                                    </Button>
+                                </div>
+
+                                <div className="mt-6 space-y-4">
+                                    {data.items.map((item, index) => (
+                                        <div
+                                            key={index}
+                                            className="rounded-[10px] border border-[#E0E5E9] p-5"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-sm font-semibold text-[#344250]">
+                                                    Item {index + 1}
+                                                </p>
+
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        data.items.length === 1
+                                                    }
+                                                    onClick={() =>
+                                                        removeItem(index)
+                                                    }
+                                                    className="flex size-8 items-center justify-center rounded-lg text-[#A35A5A] hover:bg-[#FCEEEE] disabled:cursor-not-allowed disabled:opacity-30"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                                <Field label="Nama Item">
+                                                    <Input
+                                                        value={item.name}
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'name',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 border-[#D7DEE4] shadow-none"
+                                                    />
+
+                                                    <InputError
+                                                        message={
+                                                            validationErrors[
+                                                                `items.${index}.name`
+                                                            ]
+                                                        }
+                                                    />
+                                                </Field>
+
+                                                <Field label="Kategori">
+                                                    <select
+                                                        value={
+                                                            item.item_category_id
+                                                        }
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'item_category_id',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm outline-none focus:border-[#1D5D8F]"
+                                                    >
+                                                        <option value="">
+                                                            Pilih kategori
+                                                        </option>
+
+                                                        {itemCategories.map(
+                                                            (category) => (
+                                                                <option
+                                                                    key={
+                                                                        category.id
+                                                                    }
+                                                                    value={
+                                                                        category.id
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        category.name
+                                                                    }
+                                                                </option>
+                                                            ),
+                                                        )}
+                                                    </select>
+                                                </Field>
+
+                                                <Field label="Kode Item">
+                                                    <Input
+                                                        value={item.code}
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'code',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 border-[#D7DEE4] shadow-none"
+                                                    />
+                                                </Field>
+
+                                                <Field label="No. Inventaris">
+                                                    <Input
+                                                        value={
+                                                            item.inventory_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'inventory_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 border-[#D7DEE4] shadow-none"
+                                                    />
+                                                </Field>
+
+                                                <Field label="Serial Number">
+                                                    <Input
+                                                        value={
+                                                            item.serial_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'serial_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 border-[#D7DEE4] shadow-none"
+                                                    />
+                                                </Field>
+
+                                                <Field label="Kondisi">
+                                                    <select
+                                                        value={item.condition}
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'condition',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm outline-none focus:border-[#1D5D8F]"
+                                                    >
+                                                        <option value="baik">
+                                                            Baik
+                                                        </option>
+
+                                                        <option value="rusak_ringan">
+                                                            Rusak Ringan
+                                                        </option>
+
+                                                        <option value="rusak_berat">
+                                                            Rusak Berat
+                                                        </option>
+                                                    </select>
+                                                </Field>
+
+                                                <Field label="Jumlah">
+                                                    <Input
+                                                        type="number"
+                                                        min="0.01"
+                                                        step="0.01"
+                                                        value={item.quantity}
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'quantity',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 border-[#D7DEE4] shadow-none"
+                                                    />
+
+                                                    <InputError
+                                                        message={
+                                                            validationErrors[
+                                                                `items.${index}.quantity`
+                                                            ]
+                                                        }
+                                                    />
+                                                </Field>
+
+                                                <Field label="Satuan">
+                                                    <select
+                                                        value={item.unit_id}
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'unit_id',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm outline-none focus:border-[#1D5D8F]"
+                                                    >
+                                                        <option value="">
+                                                            Pilih satuan
+                                                        </option>
+
+                                                        {units.map((unit) => (
+                                                            <option
+                                                                key={unit.id}
+                                                                value={unit.id}
+                                                            >
+                                                                {unit.name}
+                                                                {unit.symbol
+                                                                    ? ` (${unit.symbol})`
+                                                                    : ''}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </Field>
+
+                                                <Field label="Nilai (Rp)">
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={item.value}
+                                                        onChange={(event) =>
+                                                            updateItem(
+                                                                index,
+                                                                'value',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 border-[#D7DEE4] shadow-none"
+                                                    />
+                                                </Field>
+
+                                                <div className="md:col-span-2 xl:col-span-3">
+                                                    <Field label="Keterangan Item">
+                                                        <textarea
+                                                            rows={2}
+                                                            value={
+                                                                item.description
+                                                            }
+                                                            onChange={(event) =>
+                                                                updateItem(
+                                                                    index,
+                                                                    'description',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-full resize-none rounded-lg border border-[#D7DEE4] px-3 py-2.5 text-sm outline-none focus:border-[#1D5D8F]"
+                                                        />
+                                                    </Field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div className="p-5 md:p-7">
+                                <SectionHeader
+                                    title="Review Perubahan"
+                                    description="Periksa data sebelum menyimpan perubahan draft."
+                                />
+
+                                <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                                    <ReviewCard title="Informasi Dokumen">
+                                        <ReviewRow
+                                            label="Jenis"
+                                            value={selectedType?.name ?? '—'}
+                                        />
+
+                                        <ReviewRow
+                                            label="Unit"
+                                            value={
+                                                selectedDepartment?.name ?? '—'
+                                            }
+                                        />
+
+                                        <ReviewRow
+                                            label="Judul"
+                                            value={data.title || '—'}
+                                        />
+
+                                        <ReviewRow
+                                            label="Tanggal"
+                                            value={data.document_date || '—'}
+                                        />
+
+                                        <ReviewRow
+                                            label="Serah Terima"
+                                            value={data.handover_date || '—'}
+                                        />
+
+                                        <ReviewRow
+                                            label="Tempat"
+                                            value={data.handover_place || '—'}
+                                        />
+                                    </ReviewCard>
+
+                                    <ReviewCard title="Pihak Terkait">
+                                        <ReviewRow
+                                            label="Pihak Pertama"
+                                            value={
+                                                data.parties.first_party.name ||
+                                                '—'
+                                            }
+                                        />
+
+                                        <ReviewRow
+                                            label="Pihak Kedua"
+                                            value={
+                                                data.parties.second_party
+                                                    .name || '—'
+                                            }
+                                        />
+
+                                        <ReviewRow
+                                            label="Jumlah Item"
+                                            value={String(data.items.length)}
+                                        />
+                                    </ReviewCard>
+                                </div>
+
+                                {Object.keys(errors).length > 0 && (
+                                    <div className="mt-5 rounded-lg border border-[#F0CACA] bg-[#FFF7F7] px-4 py-3 text-sm text-[#A94747]">
+                                        Masih ada data yang belum valid. Periksa
+                                        kembali setiap langkah.
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex flex-col-reverse justify-between gap-3 border-t border-[#E5E9EC] px-5 py-4 sm:flex-row sm:items-center md:px-7">
+                            <div>
+                                {step === 0 ? (
+                                    <Link
+                                        href={`/bast/${bast.uuid}`}
+                                        className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-[#657481] hover:bg-[#F3F5F7]"
+                                    >
+                                        Batal
+                                    </Link>
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                            setStep(Math.max(step - 1, 0))
+                                        }
+                                        className="border-[#D7DEE4] bg-white text-[#52616D]"
+                                    >
+                                        <ChevronLeft className="size-4" />
+                                        Sebelumnya
+                                    </Button>
+                                )}
+                            </div>
+
+                            {step < steps.length - 1 ? (
+                                <Button
+                                    type="button"
+                                    onClick={() =>
+                                        setStep(
+                                            Math.min(
+                                                step + 1,
+                                                steps.length - 1,
+                                            ),
+                                        )
+                                    }
+                                    className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                                >
+                                    Selanjutnya
+                                    <ChevronRight className="size-4" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    disabled={processing}
+                                    onClick={submit}
+                                    className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                                >
+                                    {processing
+                                        ? 'Menyimpan...'
+                                        : 'Simpan Perubahan'}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
+
+function SectionHeader({
+    title,
+    description,
+}: {
+    title: string;
+    description: string;
+}) {
+    return (
+        <div>
+            <h2 className="text-[16px] font-semibold text-[#25313C]">
+                {title}
+            </h2>
+
+            <p className="mt-1 text-xs leading-5 text-[#87949F]">
+                {description}
+            </p>
+        </div>
+    );
+}
+
+function Field({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="grid gap-2">
+            <Label className="text-sm font-medium text-[#46545F]">
+                {label}
+            </Label>
+
+            {children}
+        </div>
+    );
+}
+
+function PartyCard({
+    title,
+    subtitle,
+    party,
+    errorPrefix,
+    errors,
+    onChange,
+}: {
+    title: string;
+    subtitle: string;
+    party: PartyForm;
+    errorPrefix: string;
+    errors: Record<string, string>;
+
+    onChange: (field: keyof PartyForm, value: string) => void;
+}) {
+    return (
+        <div className="rounded-[10px] border border-[#E0E5E9] p-5">
+            <h3 className="text-sm font-semibold text-[#344250]">{title}</h3>
+
+            <p className="mt-1 text-xs text-[#87949F]">{subtitle}</p>
+
+            <div className="mt-5 grid gap-4">
+                <Field label="Nama">
+                    <Input
+                        value={party.name}
+                        onChange={(event) =>
+                            onChange('name', event.target.value)
+                        }
+                        className="h-10 border-[#D7DEE4] shadow-none"
+                    />
+
+                    <InputError message={errors[`${errorPrefix}.name`]} />
+                </Field>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="NIP">
+                        <Input
+                            value={party.nip}
+                            onChange={(event) =>
+                                onChange('nip', event.target.value)
+                            }
+                            className="h-10 border-[#D7DEE4] shadow-none"
+                        />
+                    </Field>
+
+                    <Field label="Jabatan">
+                        <Input
+                            value={party.position}
+                            onChange={(event) =>
+                                onChange('position', event.target.value)
+                            }
+                            className="h-10 border-[#D7DEE4] shadow-none"
+                        />
+                    </Field>
+                </div>
+
+                <Field label="Unit / Bidang">
+                    <Input
+                        value={party.department}
+                        onChange={(event) =>
+                            onChange('department', event.target.value)
+                        }
+                        className="h-10 border-[#D7DEE4] shadow-none"
+                    />
+                </Field>
+
+                <Field label="Instansi">
+                    <Input
+                        value={party.institution}
+                        onChange={(event) =>
+                            onChange('institution', event.target.value)
+                        }
+                        className="h-10 border-[#D7DEE4] shadow-none"
+                    />
+
+                    <InputError
+                        message={errors[`${errorPrefix}.institution`]}
+                    />
+                </Field>
+
+                <Field label="Alamat">
+                    <textarea
+                        rows={3}
+                        value={party.address}
+                        onChange={(event) =>
+                            onChange('address', event.target.value)
+                        }
+                        className="w-full resize-none rounded-lg border border-[#D7DEE4] px-3 py-2.5 text-sm outline-none focus:border-[#1D5D8F]"
+                    />
+                </Field>
+            </div>
+        </div>
+    );
+}
+
+function ReviewCard({
+    title,
+    children,
+}: {
+    title: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="rounded-[10px] border border-[#E0E5E9] p-5">
+            <h3 className="text-sm font-semibold text-[#344250]">{title}</h3>
+
+            <div className="mt-4 space-y-3">{children}</div>
+        </div>
+    );
+}
+
+function ReviewRow({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="flex items-start justify-between gap-5">
+            <span className="text-xs text-[#87949F]">{label}</span>
+
+            <span className="max-w-[65%] text-right text-xs font-medium text-[#46545F]">
+                {value}
+            </span>
+        </div>
+    );
+}
+
+BastEdit.layout = {
+    breadcrumbs: [
+        {
+            title: 'Berita Acara',
+            href: '/bast',
+        },
+        {
+            title: 'Edit Draft',
+            href: '#',
+        },
+    ],
+};

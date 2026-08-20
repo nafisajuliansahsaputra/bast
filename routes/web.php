@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BastAttachmentController;
 use App\Http\Controllers\BastController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,30 @@ Route::middleware([
         ],
     )->name('bast.finalize');
 
+    Route::post(
+        'bast/{bast}/attachments',
+        [
+            BastAttachmentController::class,
+            'store',
+        ],
+    )->name('bast.attachments.store');
+
+    Route::get(
+        'bast/{bast}/attachments/{attachment}/download',
+        [
+            BastAttachmentController::class,
+            'download',
+        ],
+    )->name('bast.attachments.download');
+
+    Route::delete(
+        'bast/{bast}/attachments/{attachment}',
+        [
+            BastAttachmentController::class,
+            'destroy',
+        ],
+    )->name('bast.attachments.destroy');
+
     Route::resource(
         'bast',
         BastController::class,
@@ -35,6 +60,8 @@ Route::middleware([
         'create',
         'store',
         'show',
+        'edit',
+        'update',
         'destroy',
     ]);
 

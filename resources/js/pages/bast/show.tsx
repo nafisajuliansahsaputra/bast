@@ -4,11 +4,13 @@ import {
     FileCheck2,
     FileText,
     Package,
-    Paperclip,
+    PencilLine,
     Trash2,
     UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
+import { BastAttachmentPanel } from '@/components/bast/bast-attachment-panel';
+import type { BastAttachmentItem } from '@/components/bast/bast-attachment-panel';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -89,7 +91,7 @@ type BastDetail = {
 
     parties: Party[];
     items: Item[];
-    attachments: unknown[];
+    attachments: BastAttachmentItem[];
 };
 
 type Permissions = {
@@ -134,6 +136,7 @@ const statusStyles: Record<
 
 function formatDate(value: string): string {
     const datePart = value.slice(0, 10);
+
     const date = new Date(`${datePart}T00:00:00`);
 
     if (Number.isNaN(date.getTime())) {
@@ -214,6 +217,9 @@ export default function BastShow({
         });
     };
 
+    const hasActions =
+        permissions.update || permissions.finalize || permissions.delete;
+
     return (
         <>
             <Head title={bast.title} />
@@ -251,8 +257,22 @@ export default function BastShow({
                             </p>
                         </div>
 
-                        {(permissions.finalize || permissions.delete) && (
+                        {hasActions && (
                             <div className="flex flex-wrap items-center gap-2">
+                                {permissions.update && (
+                                    <Button
+                                        asChild
+                                        type="button"
+                                        variant="outline"
+                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9] hover:text-[#344250]"
+                                    >
+                                        <Link href={`/bast/${bast.uuid}/edit`}>
+                                            <PencilLine className="size-4" />
+                                            Edit Draft
+                                        </Link>
+                                    </Button>
+                                )}
+
                                 {permissions.finalize && (
                                     <Button
                                         type="button"
@@ -439,21 +459,11 @@ export default function BastShow({
                                 </div>
                             </section>
 
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5">
-                                <div className="flex items-center gap-2">
-                                    <Paperclip className="size-4 text-[#1D5D8F]" />
-
-                                    <h2 className="text-sm font-semibold text-[#344250]">
-                                        Lampiran
-                                    </h2>
-                                </div>
-
-                                <p className="mt-3 text-xs leading-5 text-[#87949F]">
-                                    {bast.attachments.length === 0
-                                        ? 'Belum ada lampiran pada BAST ini.'
-                                        : `${bast.attachments.length} lampiran tersedia.`}
-                                </p>
-                            </section>
+                            <BastAttachmentPanel
+                                bastUuid={bast.uuid}
+                                attachments={bast.attachments}
+                                canManage={permissions.manageAttachments}
+                            />
                         </div>
                     </div>
                 </div>
@@ -468,14 +478,14 @@ export default function BastShow({
 
                         <DialogDescription className="leading-6 text-[#71808C]">
                             Setelah difinalisasi, nomor dokumen akan dibuat dan
-                            isi BAST dikunci dari perubahan biasa.
+                            isi BAST dikunci.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="rounded-lg border border-[#DCE8F0] bg-[#F5F9FC] px-4 py-3">
                         <p className="text-xs leading-5 text-[#526675]">
-                            Pastikan informasi dokumen, pihak terkait, dan item
-                            sudah benar sebelum melanjutkan.
+                            Pastikan informasi dokumen, pihak, item, dan
+                            lampiran sudah benar.
                         </p>
                     </div>
 
@@ -512,9 +522,9 @@ export default function BastShow({
                         </DialogTitle>
 
                         <DialogDescription className="leading-6 text-[#71808C]">
-                            Draft &quot;{bast.title}&quot; akan dihapus dari
-                            daftar BAST. Tindakan ini hanya tersedia selama
-                            dokumen masih Draft.
+                            Draft &quot;
+                            {bast.title}
+                            &quot; akan dihapus dari daftar BAST.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -591,11 +601,9 @@ function PartyDetail({
 }) {
     return (
         <div className="rounded-lg border border-[#E2E6EA] p-4">
-            <div>
-                <p className="text-xs font-semibold text-[#344250]">{title}</p>
+            <p className="text-xs font-semibold text-[#344250]">{title}</p>
 
-                <p className="mt-0.5 text-[10px] text-[#87949F]">{subtitle}</p>
-            </div>
+            <p className="mt-0.5 text-[10px] text-[#87949F]">{subtitle}</p>
 
             <div className="mt-4 space-y-3">
                 <DetailRow label="Nama" value={party?.name ?? '—'} />

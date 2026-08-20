@@ -103,6 +103,119 @@ class BastService
         });
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updateDraft(
+        User $user,
+        Bast $bast,
+        array $data,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): Bast {
+        return DB::transaction(function () use (
+            $user,
+            $bast,
+            $data,
+            $ipAddress,
+            $userAgent,
+        ): Bast {
+            $lockedBast = Bast::query()
+                ->whereKey($bast->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedBast->isDraft()) {
+                throw ValidationException::withMessages([
+                    'bast' => 'Hanya BAST berstatus Draft yang dapat diedit.',
+                ]);
+            }
+
+            $oldValues = [
+                'title' => $lockedBast->title,
+                'description' => $lockedBast->description,
+                'bast_type_id' => $lockedBast->bast_type_id,
+                'department_id' => $lockedBast->department_id,
+                'document_date' => $lockedBast->document_date->toDateString(),
+                'handover_date' => $lockedBast->handover_date->toDateString(),
+                'handover_place' => $lockedBast->handover_place,
+                'items_count' => $lockedBast->items()->count(),
+            ];
+
+            $documentDate = CarbonImmutable::parse(
+                (string) $data['document_date'],
+            );
+
+            $departmentId = $this->resolveDepartmentId(
+                $user,
+                $data,
+            );
+
+            $lockedBast->update([
+                'bast_type_id' => (int) $data['bast_type_id'],
+                'department_id' => $departmentId,
+
+                'document_month' => $documentDate->month,
+                'document_year' => $documentDate->year,
+
+                'title' => (string) $data['title'],
+
+                'description' => $this->nullableString(
+                    $data['description'] ?? null,
+                ),
+
+                'document_date' => $documentDate->toDateString(),
+
+                'handover_date' => CarbonImmutable::parse(
+                    (string) $data['handover_date'],
+                )->toDateString(),
+
+                'handover_place' => (string) $data['handover_place'],
+            ]);
+
+            $lockedBast->parties()->delete();
+            $lockedBast->items()->delete();
+
+            $this->createParties(
+                $lockedBast,
+                $data['parties'] ?? null,
+            );
+
+            $this->createItems(
+                $lockedBast,
+                $data['items'] ?? null,
+            );
+
+            $lockedBast->activityLogs()->create([
+                'user_id' => $user->id,
+                'action' => 'BAST_UPDATED',
+
+                'description' => sprintf(
+                    'Memperbarui draft BAST "%s".',
+                    $lockedBast->title,
+                ),
+
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent,
+
+                'old_values' => $oldValues,
+
+                'new_values' => [
+                    'title' => $lockedBast->title,
+                    'description' => $lockedBast->description,
+                    'bast_type_id' => $lockedBast->bast_type_id,
+                    'department_id' => $lockedBast->department_id,
+                    'document_date' => $lockedBast->document_date->toDateString(),
+                    'handover_date' => $lockedBast->handover_date->toDateString(),
+                    'handover_place' => $lockedBast->handover_place,
+                    'items_count' => $lockedBast->items()->count(),
+                ],
+            ]);
+
+            return $lockedBast->fresh() ?? $lockedBast;
+        });
+    }
+
     public function finalize(
         User $user,
         Bast $bast,
