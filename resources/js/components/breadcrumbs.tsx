@@ -15,25 +15,37 @@ export function Breadcrumbs({
 }: {
     breadcrumbs: BreadcrumbItemType[];
 }) {
+    if (breadcrumbs.length === 0) {
+        return null;
+    }
+
+    const currentPage = breadcrumbs[breadcrumbs.length - 1];
+
     return (
-        <>
-            {breadcrumbs.length > 0 && (
+        <div className="min-w-0 flex-1">
+            <div className="min-w-0 sm:hidden">
+                <p className="truncate text-sm font-medium text-[#344250]">
+                    {currentPage.title}
+                </p>
+            </div>
+
+            <div className="hidden min-w-0 sm:block">
                 <Breadcrumb>
-                    <BreadcrumbList className="text-sm text-[#71808C]">
+                    <BreadcrumbList className="flex-nowrap text-sm text-[#71808C]">
                         {breadcrumbs.map((item, index) => {
                             const isLast = index === breadcrumbs.length - 1;
 
                             return (
                                 <Fragment key={index}>
-                                    <BreadcrumbItem>
+                                    <BreadcrumbItem className="min-w-0">
                                         {isLast ? (
-                                            <BreadcrumbPage className="font-medium text-[#344250]">
+                                            <BreadcrumbPage className="max-w-[320px] truncate font-medium text-[#344250]">
                                                 {item.title}
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink
                                                 asChild
-                                                className="text-[#71808C] hover:text-[#1D5D8F]"
+                                                className="max-w-[240px] truncate text-[#71808C] hover:text-[#1D5D8F]"
                                             >
                                                 <Link href={item.href}>
                                                     {item.title}
@@ -43,14 +55,14 @@ export function Breadcrumbs({
                                     </BreadcrumbItem>
 
                                     {!isLast && (
-                                        <BreadcrumbSeparator className="text-[#A5AFB7]" />
+                                        <BreadcrumbSeparator className="shrink-0 text-[#A5AFB7]" />
                                     )}
                                 </Fragment>
                             );
                         })}
                     </BreadcrumbList>
                 </Breadcrumb>
-            )}
-        </>
+            </div>
+        </div>
     );
 }

@@ -130,15 +130,15 @@ export function BastAttachmentPanel({
 
     return (
         <>
-            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5">
-                <div className="flex items-center gap-2">
-                    <Paperclip className="size-4 text-[#1D5D8F]" />
+            <section className="min-w-0 overflow-hidden rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5">
+                <div className="flex min-w-0 items-center gap-2">
+                    <Paperclip className="size-4 shrink-0 text-[#1D5D8F]" />
 
-                    <h2 className="text-sm font-semibold text-[#344250]">
+                    <h2 className="min-w-0 text-sm font-semibold text-[#344250]">
                         Lampiran
                     </h2>
 
-                    <span className="ml-auto rounded-full bg-[#F1F4F6] px-2 py-0.5 text-[10px] font-medium text-[#71808C]">
+                    <span className="ml-auto shrink-0 rounded-full bg-[#F1F4F6] px-2 py-0.5 text-[10px] font-medium text-[#71808C]">
                         {attachments.length}
                     </span>
                 </div>
@@ -146,7 +146,7 @@ export function BastAttachmentPanel({
                 {canManage && (
                     <form
                         onSubmit={submit}
-                        className="mt-4 rounded-lg border border-[#E1E6EA] bg-[#FAFBFC] p-4"
+                        className="mt-4 min-w-0 rounded-lg border border-[#E1E6EA] bg-[#FAFBFC] p-4"
                     >
                         <label className="text-xs font-medium text-[#52616D]">
                             File
@@ -159,7 +159,7 @@ export function BastAttachmentPanel({
                             onChange={(event) =>
                                 setData('file', event.target.files?.[0] ?? null)
                             }
-                            className="mt-2 block w-full text-xs text-[#657481] file:mr-3 file:rounded-md file:border-0 file:bg-[#EAF3FA] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[#1D5D8F] hover:file:bg-[#DCECF7]"
+                            className="mt-2 block max-w-full min-w-0 text-xs text-[#657481] file:mr-2 file:rounded-md file:border-0 file:bg-[#EAF3FA] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[#1D5D8F] hover:file:bg-[#DCECF7]"
                         />
 
                         <InputError message={errors.file} />
@@ -173,7 +173,7 @@ export function BastAttachmentPanel({
                             onChange={(event) =>
                                 setData('category', event.target.value)
                             }
-                            className="mt-2 h-9 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-xs text-[#46545F] outline-none focus:border-[#1D5D8F]"
+                            className="mt-2 h-9 w-full min-w-0 rounded-lg border border-[#D7DEE4] bg-white px-3 text-xs text-[#46545F] outline-none focus:border-[#1D5D8F]"
                         >
                             <option value="supporting_document">
                                 Dokumen Pendukung
@@ -205,7 +205,7 @@ export function BastAttachmentPanel({
                                 setData('description', event.target.value)
                             }
                             placeholder="Opsional"
-                            className="mt-2 w-full resize-none rounded-lg border border-[#D7DEE4] bg-white px-3 py-2 text-xs text-[#46545F] outline-none placeholder:text-[#A0AAB2] focus:border-[#1D5D8F]"
+                            className="mt-2 w-full min-w-0 resize-none rounded-lg border border-[#D7DEE4] bg-white px-3 py-2 text-xs text-[#46545F] outline-none placeholder:text-[#A0AAB2] focus:border-[#1D5D8F]"
                         />
 
                         <InputError message={errors.description} />
@@ -227,7 +227,7 @@ export function BastAttachmentPanel({
                 )}
 
                 {attachments.length === 0 ? (
-                    <div className="py-7 text-center">
+                    <div className="w-full py-7 text-center">
                         <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-[#F1F5F7] text-[#87949F]">
                             <Paperclip className="size-4" />
                         </div>
@@ -241,7 +241,7 @@ export function BastAttachmentPanel({
                         </p>
                     </div>
                 ) : (
-                    <div className="mt-4 divide-y divide-[#EDF0F2]">
+                    <div className="mt-4 min-w-0 divide-y divide-[#EDF0F2]">
                         {attachments.map((attachment) => {
                             const isImage =
                                 attachment.mime_type?.startsWith('image/') ??
@@ -252,9 +252,9 @@ export function BastAttachmentPanel({
                             return (
                                 <div
                                     key={attachment.id}
-                                    className="py-3 first:pt-0 last:pb-0"
+                                    className="min-w-0 py-3 first:pt-0 last:pb-0"
                                 >
-                                    <div className="flex gap-3">
+                                    <div className="flex min-w-0 gap-3">
                                         <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#EEF4F8] text-[#1D5D8F]">
                                             <Icon className="size-4" />
                                         </div>
@@ -267,7 +267,7 @@ export function BastAttachmentPanel({
                                                 {attachment.original_name}
                                             </p>
 
-                                            <p className="mt-1 text-[10px] text-[#939EA6]">
+                                            <p className="mt-1 text-[10px] break-words text-[#939EA6]">
                                                 {categoryLabels[
                                                     attachment.category ??
                                                         'other'
@@ -279,12 +279,12 @@ export function BastAttachmentPanel({
                                             </p>
 
                                             {attachment.description && (
-                                                <p className="mt-1 text-[10px] leading-4 text-[#7D8993]">
+                                                <p className="mt-1 text-[10px] leading-4 break-words text-[#7D8993]">
                                                     {attachment.description}
                                                 </p>
                                             )}
 
-                                            <div className="mt-2 flex items-center gap-1">
+                                            <div className="mt-2 flex flex-wrap items-center gap-1">
                                                 <a
                                                     href={`/bast/${bastUuid}/attachments/${attachment.id}/download`}
                                                     className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-medium text-[#1D5D8F] hover:bg-[#EEF5FA]"
@@ -325,13 +325,13 @@ export function BastAttachmentPanel({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[460px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[460px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             Hapus lampiran?
                         </DialogTitle>
 
-                        <DialogDescription className="leading-6 text-[#71808C]">
+                        <DialogDescription className="leading-6 break-words text-[#71808C]">
                             File &quot;
                             {attachmentToDelete?.original_name}
                             &quot; akan dihapus dari BAST ini.
@@ -344,7 +344,7 @@ export function BastAttachmentPanel({
                             variant="outline"
                             disabled={deleting}
                             onClick={() => setAttachmentToDelete(null)}
-                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                            className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                         >
                             Batal
                         </Button>
@@ -353,7 +353,7 @@ export function BastAttachmentPanel({
                             type="button"
                             disabled={deleting}
                             onClick={deleteAttachment}
-                            className="bg-[#B44949] text-white hover:bg-[#9E3D3D]"
+                            className="w-full bg-[#B44949] text-white hover:bg-[#9E3D3D] sm:w-auto"
                         >
                             {deleting ? 'Menghapus...' : 'Hapus Lampiran'}
                         </Button>

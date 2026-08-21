@@ -271,13 +271,9 @@ export default function BastShow({
     permissions: Permissions;
 }) {
     const [finalizeOpen, setFinalizeOpen] = useState(false);
-
     const [deleteOpen, setDeleteOpen] = useState(false);
-
     const [cancelOpen, setCancelOpen] = useState(false);
-
     const [cancellationReason, setCancellationReason] = useState('');
-
     const [cancellationError, setCancellationError] = useState<string | null>(
         null,
     );
@@ -432,8 +428,8 @@ export default function BastShow({
         <>
             <Head title={bast.title} />
 
-            <div className="flex flex-1 flex-col px-5 py-6 md:px-8 md:py-8">
-                <div className="mx-auto w-full max-w-[1400px]">
+            <div className="flex min-w-0 flex-1 flex-col px-4 py-5 sm:px-5 sm:py-6 md:px-8 md:py-8">
+                <div className="mx-auto w-full max-w-[1400px] min-w-0">
                     <Link
                         href="/bast"
                         className="inline-flex items-center gap-2 text-sm font-medium text-[#657481] hover:text-[#1D5D8F]"
@@ -442,21 +438,21 @@ export default function BastShow({
                         Kembali ke Berita Acara
                     </Link>
 
-                    <div className="mt-5 flex flex-col justify-between gap-5 lg:flex-row lg:items-start">
+                    <div className="mt-5 flex min-w-0 flex-col justify-between gap-5 lg:flex-row lg:items-start">
                         <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3">
                                 <span
-                                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${status.className}`}
+                                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${status.className}`}
                                 >
                                     {displayStatusLabel}
                                 </span>
 
-                                <span className="font-mono text-xs text-[#87949F]">
+                                <span className="min-w-0 font-mono text-[10px] break-all text-[#87949F] sm:text-xs">
                                     {bast.document_number ?? 'Belum bernomor'}
                                 </span>
                             </div>
 
-                            <h1 className="mt-3 text-[28px] font-semibold tracking-[-0.035em] text-[#17212B]">
+                            <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.035em] break-words text-[#17212B] sm:text-[28px]">
                                 {bast.title}
                             </h1>
 
@@ -466,13 +462,13 @@ export default function BastShow({
                         </div>
 
                         {hasActions && (
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
                                 {permissions.update && (
                                     <Button
                                         asChild
                                         type="button"
                                         variant="outline"
-                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9] hover:text-[#344250]"
+                                        className="col-span-2 h-10 w-full border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9] hover:text-[#344250] sm:col-auto sm:w-auto"
                                     >
                                         <Link href={`/bast/${bast.uuid}/edit`}>
                                             <PencilLine className="size-4" />
@@ -486,7 +482,7 @@ export default function BastShow({
                                         asChild
                                         type="button"
                                         variant="outline"
-                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9]"
+                                        className="h-10 w-full border-[#D7DEE4] bg-white px-3 text-[#52616D] shadow-none hover:bg-[#F5F7F9] sm:w-auto sm:px-4"
                                     >
                                         <a
                                             href={previewBast.url(bast.uuid)}
@@ -504,7 +500,7 @@ export default function BastShow({
                                         asChild
                                         type="button"
                                         variant="outline"
-                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9]"
+                                        className="h-10 w-full border-[#D7DEE4] bg-white px-3 text-[#52616D] shadow-none hover:bg-[#F5F7F9] sm:w-auto sm:px-4"
                                     >
                                         <a
                                             href={pdfBast.url(bast.uuid)}
@@ -523,7 +519,7 @@ export default function BastShow({
                                         onClick={() =>
                                             setLifecycleAction('complete')
                                         }
-                                        className="h-10 bg-[#287A4B] px-4 text-white shadow-none hover:bg-[#21653E]"
+                                        className="col-span-2 h-10 w-full bg-[#287A4B] px-4 text-white shadow-none hover:bg-[#21653E] sm:col-auto sm:w-auto"
                                     >
                                         <CheckCircle2 className="size-4" />
                                         Tandai Selesai
@@ -537,7 +533,7 @@ export default function BastShow({
                                         onClick={() =>
                                             setLifecycleAction('reopen')
                                         }
-                                        className="h-10 border-[#E8D4AF] bg-white px-4 text-[#9A6718] shadow-none hover:bg-[#FFF9EF] hover:text-[#825613]"
+                                        className="h-10 w-full border-[#E8D4AF] bg-white px-3 text-[#9A6718] shadow-none hover:bg-[#FFF9EF] hover:text-[#825613] sm:w-auto sm:px-4"
                                     >
                                         <Undo2 className="size-4" />
                                         Buka Kembali
@@ -552,7 +548,7 @@ export default function BastShow({
                                             setCancellationError(null);
                                             setCancelOpen(true);
                                         }}
-                                        className="h-10 border-[#E3CACA] bg-white px-4 text-[#B44949] shadow-none hover:bg-[#FFF6F6] hover:text-[#A53E3E]"
+                                        className="h-10 w-full border-[#E3CACA] bg-white px-3 text-[#B44949] shadow-none hover:bg-[#FFF6F6] hover:text-[#A53E3E] sm:w-auto sm:px-4"
                                     >
                                         <Ban className="size-4" />
                                         Batalkan
@@ -565,7 +561,7 @@ export default function BastShow({
                                         onClick={() =>
                                             setLifecycleAction('archive')
                                         }
-                                        className="h-10 bg-[#53616D] px-4 text-white shadow-none hover:bg-[#45515B]"
+                                        className="col-span-2 h-10 w-full bg-[#53616D] px-4 text-white shadow-none hover:bg-[#45515B] sm:col-auto sm:w-auto"
                                     >
                                         <ArchiveIcon className="size-4" />
                                         Arsipkan
@@ -579,7 +575,7 @@ export default function BastShow({
                                             setLifecycleAction('restore')
                                         }
                                         variant="outline"
-                                        className="h-10 border-[#D7DEE4] bg-white px-4 text-[#1D5D8F] shadow-none hover:bg-[#EEF5FA]"
+                                        className="col-span-2 h-10 w-full border-[#D7DEE4] bg-white px-4 text-[#1D5D8F] shadow-none hover:bg-[#EEF5FA] sm:col-auto sm:w-auto"
                                     >
                                         <RotateCcw className="size-4" />
                                         Pulihkan
@@ -590,9 +586,10 @@ export default function BastShow({
                                     <Button
                                         type="button"
                                         onClick={() => setFinalizeOpen(true)}
-                                        className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
+                                        className="col-span-2 h-10 w-full bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76] sm:col-auto sm:w-auto"
                                     >
                                         <FileCheck2 className="size-4" />
+
                                         {isRevisionDraft
                                             ? 'Finalisasi Ulang'
                                             : 'Finalisasi BAST'}
@@ -604,7 +601,7 @@ export default function BastShow({
                                         type="button"
                                         variant="outline"
                                         onClick={() => setDeleteOpen(true)}
-                                        className="h-10 border-[#E3CACA] bg-white px-4 text-[#B44949] shadow-none hover:bg-[#FFF6F6] hover:text-[#A53E3E]"
+                                        className="col-span-2 h-10 w-full border-[#E3CACA] bg-white px-4 text-[#B44949] shadow-none hover:bg-[#FFF6F6] hover:text-[#A53E3E] sm:col-auto sm:w-auto"
                                     >
                                         <Trash2 className="size-4" />
                                         Hapus Draft
@@ -615,23 +612,23 @@ export default function BastShow({
                     </div>
 
                     {bast.status === 'cancelled' && (
-                        <div className="mt-6 rounded-[10px] border border-[#E6C5C5] bg-[#FFF5F5] p-5">
+                        <div className="mt-6 rounded-[10px] border border-[#E6C5C5] bg-[#FFF5F5] p-4 sm:p-5">
                             <div className="flex items-start gap-3">
                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#FCE5E5] text-[#B64040]">
                                     <Ban className="size-4" />
                                 </div>
 
-                                <div>
+                                <div className="min-w-0">
                                     <h2 className="text-sm font-semibold text-[#8F3838]">
                                         Dokumen Dibatalkan
                                     </h2>
 
-                                    <p className="mt-1 text-xs leading-5 text-[#8B5B5B]">
+                                    <p className="mt-1 text-xs leading-5 break-words text-[#8B5B5B]">
                                         {bast.cancellation_reason ??
                                             'Tidak ada alasan pembatalan.'}
                                     </p>
 
-                                    <p className="mt-2 text-[11px] text-[#9A7070]">
+                                    <p className="mt-2 text-[11px] break-words text-[#9A7070]">
                                         {bast.cancelled_by?.name ??
                                             'Administrator'}
 
@@ -646,8 +643,8 @@ export default function BastShow({
                         </div>
                     )}
 
-                    <div className="mt-7 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                        <div className="space-y-4">
+                    <div className="mt-6 grid min-w-0 gap-4 md:mt-7 xl:grid-cols-[minmax(0,1fr)_340px]">
+                        <div className="min-w-0 space-y-4">
                             <Section icon={FileText} title="Informasi Dokumen">
                                 <div className="grid gap-5 sm:grid-cols-2">
                                     <DetailRow
@@ -708,7 +705,65 @@ export default function BastShow({
                                 icon={Package}
                                 title={`Item (${bast.items.length})`}
                             >
-                                <div className="overflow-x-auto">
+                                <div className="space-y-3 md:hidden">
+                                    {bast.items.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className="rounded-lg border border-[#E2E6EA] p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-[13px] font-semibold break-words text-[#344250]">
+                                                        {item.name}
+                                                    </p>
+
+                                                    <p className="mt-1 text-[10px] break-all text-[#8B97A1]">
+                                                        {item.inventory_number ??
+                                                            item.serial_number ??
+                                                            item.code ??
+                                                            'Tidak ada kode'}
+                                                    </p>
+                                                </div>
+
+                                                <span className="shrink-0 rounded-full bg-[#F1F4F6] px-2.5 py-1 text-[10px] font-medium text-[#657481]">
+                                                    {formatCondition(
+                                                        item.condition,
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#EDF0F2] pt-3">
+                                                <DetailRow
+                                                    label="Kategori"
+                                                    value={
+                                                        item.item_category
+                                                            ?.name ?? '—'
+                                                    }
+                                                />
+
+                                                <DetailRow
+                                                    label="Jumlah"
+                                                    value={`${item.quantity} ${
+                                                        item.unit?.symbol ??
+                                                        item.unit?.name ??
+                                                        ''
+                                                    }`}
+                                                />
+                                            </div>
+
+                                            {item.description && (
+                                                <div className="mt-4 border-t border-[#EDF0F2] pt-3">
+                                                    <DetailRow
+                                                        label="Keterangan"
+                                                        value={item.description}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full min-w-[760px]">
                                         <thead>
                                             <tr className="border-b border-[#E7EBEE]">
@@ -774,8 +829,8 @@ export default function BastShow({
                             </Section>
                         </div>
 
-                        <div className="space-y-4">
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5">
+                        <div className="min-w-0 space-y-4">
+                            <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5">
                                 <h2 className="text-sm font-semibold text-[#344250]">
                                     Ringkasan
                                 </h2>
@@ -817,7 +872,7 @@ export default function BastShow({
             </div>
 
             <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             {isRevisionDraft
@@ -846,7 +901,7 @@ export default function BastShow({
                             variant="outline"
                             disabled={processingAction}
                             onClick={() => setFinalizeOpen(false)}
-                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                            className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                         >
                             Batal
                         </Button>
@@ -855,7 +910,7 @@ export default function BastShow({
                             type="button"
                             disabled={processingAction}
                             onClick={finalizeBast}
-                            className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                            className="w-full bg-[#1D5D8F] text-white hover:bg-[#174C76] sm:w-auto"
                         >
                             {processingAction
                                 ? 'Memfinalisasi...'
@@ -868,7 +923,7 @@ export default function BastShow({
             </Dialog>
 
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             Hapus draft BAST?
@@ -886,7 +941,7 @@ export default function BastShow({
                             variant="outline"
                             disabled={processingAction}
                             onClick={() => setDeleteOpen(false)}
-                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                            className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                         >
                             Batal
                         </Button>
@@ -895,7 +950,7 @@ export default function BastShow({
                             type="button"
                             disabled={processingAction}
                             onClick={deleteBast}
-                            className="bg-[#B44949] text-white hover:bg-[#9E3D3D]"
+                            className="w-full bg-[#B44949] text-white hover:bg-[#9E3D3D] sm:w-auto"
                         >
                             {processingAction ? 'Menghapus...' : 'Hapus Draft'}
                         </Button>
@@ -918,7 +973,7 @@ export default function BastShow({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[520px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[520px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             Batalkan BAST?
@@ -989,7 +1044,7 @@ export default function BastShow({
                                 setCancellationReason('');
                                 setCancellationError(null);
                             }}
-                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                            className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                         >
                             Kembali
                         </Button>
@@ -1001,7 +1056,7 @@ export default function BastShow({
                                 cancellationReason.trim().length < 10
                             }
                             onClick={cancelCurrentBast}
-                            className="bg-[#B44949] text-white hover:bg-[#9E3D3D]"
+                            className="w-full bg-[#B44949] text-white hover:bg-[#9E3D3D] sm:w-auto"
                         >
                             <Ban className="size-4" />
 
@@ -1021,7 +1076,7 @@ export default function BastShow({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             {activeLifecycleDialog?.title}
@@ -1044,7 +1099,7 @@ export default function BastShow({
                             variant="outline"
                             disabled={processingAction}
                             onClick={() => setLifecycleAction(null)}
-                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                            className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                         >
                             Batal
                         </Button>
@@ -1053,10 +1108,10 @@ export default function BastShow({
                             type="button"
                             disabled={processingAction}
                             onClick={runLifecycleAction}
-                            className={
+                            className={`w-full sm:w-auto ${
                                 activeLifecycleDialog?.confirmClassName ??
                                 'bg-[#1D5D8F] text-white hover:bg-[#174C76]'
-                            }
+                            }`}
                         >
                             {processingAction
                                 ? activeLifecycleDialog?.processingLabel
@@ -1079,28 +1134,30 @@ function Section({
     children: React.ReactNode;
 }) {
     return (
-        <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5 md:p-6">
+        <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5 md:p-6">
             <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-[#EEF4F8] text-[#1D5D8F]">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#EEF4F8] text-[#1D5D8F]">
                     <Icon className="size-4" />
                 </div>
 
-                <h2 className="text-[15px] font-semibold text-[#344250]">
+                <h2 className="min-w-0 text-[15px] font-semibold break-words text-[#344250]">
                     {title}
                 </h2>
             </div>
 
-            <div className="mt-5">{children}</div>
+            <div className="mt-5 min-w-0">{children}</div>
         </section>
     );
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
     return (
-        <div>
+        <div className="min-w-0">
             <p className="text-[11px] font-medium text-[#8A96A0]">{label}</p>
 
-            <p className="mt-1 text-[13px] leading-5 text-[#46545F]">{value}</p>
+            <p className="mt-1 min-w-0 text-[13px] leading-5 break-words text-[#46545F]">
+                {value}
+            </p>
         </div>
     );
 }
@@ -1115,7 +1172,7 @@ function PartyDetail({
     party?: Party;
 }) {
     return (
-        <div className="rounded-lg border border-[#E2E6EA] p-4">
+        <div className="min-w-0 rounded-lg border border-[#E2E6EA] p-4">
             <p className="text-xs font-semibold text-[#344250]">{title}</p>
 
             <p className="mt-0.5 text-[10px] text-[#87949F]">{subtitle}</p>

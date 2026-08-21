@@ -5,6 +5,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
@@ -17,6 +18,14 @@ export function NavMain({
     label: string;
 }) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+
+    const { isMobile, setOpenMobile } = useSidebar();
+
+    const handleNavigation = () => {
+        if (isMobile) {
+            setOpenMobile(false);
+        }
+    };
 
     return (
         <SidebarGroup className="px-3 py-2">
@@ -33,10 +42,16 @@ export function NavMain({
                             <SidebarMenuButton
                                 asChild
                                 isActive={isActive}
-                                tooltip={{ children: item.title }}
+                                tooltip={{
+                                    children: item.title,
+                                }}
                                 className="h-10 rounded-lg px-3 text-[13px] font-medium text-white/65 transition-colors hover:bg-white/[0.07] hover:text-white data-[active=true]:bg-white/[0.1] data-[active=true]:text-white"
                             >
-                                <Link href={item.href} prefetch>
+                                <Link
+                                    href={item.href}
+                                    prefetch
+                                    onClick={handleNavigation}
+                                >
                                     {item.icon && (
                                         <item.icon
                                             className="size-[18px]"

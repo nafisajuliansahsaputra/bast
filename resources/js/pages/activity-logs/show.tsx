@@ -153,6 +153,14 @@ function humanizeValue(key: string, value: unknown): string {
         return statusLabels[value];
     }
 
+    if (key.endsWith('_at') && typeof value === 'string') {
+        const date = new Date(value);
+
+        if (!Number.isNaN(date.getTime())) {
+            return formatDateTime(value);
+        }
+    }
+
     if (key === 'is_active' || key === 'two_factor_enabled') {
         if (value === true || value === 1 || value === '1') {
             return 'Ya';
@@ -204,20 +212,20 @@ export default function ActivityLogShow({ activityLog }: Props) {
         <>
             <Head title={activityLog.action_label} />
 
-            <div className="flex flex-1 flex-col px-5 py-6 md:px-8 md:py-8">
-                <div className="mx-auto w-full max-w-[1200px]">
+            <div className="flex min-w-0 flex-1 flex-col px-4 py-5 sm:px-5 sm:py-6 md:px-8 md:py-8">
+                <div className="mx-auto w-full max-w-[1200px] min-w-0">
                     <Link
                         href="/activity-logs"
                         className="inline-flex items-center gap-2 text-sm font-medium text-[#657481] hover:text-[#1D5D8F]"
                     >
-                        <ArrowLeft className="size-4" />
+                        <ArrowLeft className="size-4 shrink-0" />
                         Kembali ke Activity Log
                     </Link>
 
-                    <div className="mt-5">
-                        <div className="flex flex-wrap items-center gap-2">
+                    <div className="mt-5 min-w-0">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
                             <span
-                                className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                                className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${
                                     categoryStyles[activityLog.category.key] ??
                                     categoryStyles.other
                                 }`}
@@ -225,31 +233,31 @@ export default function ActivityLogShow({ activityLog }: Props) {
                                 {activityLog.category.label}
                             </span>
 
-                            <span className="font-mono text-[10px] text-[#929DA6]">
+                            <span className="min-w-0 font-mono text-[10px] break-all text-[#929DA6]">
                                 {activityLog.action}
                             </span>
                         </div>
 
-                        <h1 className="mt-3 text-[28px] font-semibold tracking-[-0.035em] text-[#17212B]">
+                        <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.035em] break-words text-[#17212B] sm:text-[28px]">
                             {activityLog.action_label}
                         </h1>
 
-                        <p className="mt-1.5 max-w-[800px] text-sm leading-6 text-[#71808C]">
+                        <p className="mt-1.5 max-w-[800px] text-sm leading-6 break-words text-[#71808C]">
                             {activityLog.description ??
                                 'Tidak ada deskripsi tambahan untuk aktivitas ini.'}
                         </p>
                     </div>
 
-                    <div className="mt-7 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-                        <div className="space-y-4">
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5 md:p-6">
+                    <div className="mt-6 grid min-w-0 gap-4 md:mt-7 lg:grid-cols-[minmax(0,1fr)_340px]">
+                        <div className="min-w-0 space-y-4">
+                            <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5 md:p-6">
                                 <SectionTitle
                                     icon={Database}
                                     title="Perubahan Data"
                                 />
 
                                 {changeKeys.length === 0 ? (
-                                    <div className="mt-5 rounded-lg border border-dashed border-[#DDE3E8] px-5 py-10 text-center">
+                                    <div className="mt-5 rounded-lg border border-dashed border-[#DDE3E8] px-4 py-8 text-center sm:px-5 sm:py-10">
                                         <p className="text-sm font-medium text-[#52616D]">
                                             Tidak ada perubahan nilai
                                         </p>
@@ -261,89 +269,130 @@ export default function ActivityLogShow({ activityLog }: Props) {
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="mt-5 overflow-x-auto rounded-lg border border-[#E5E9EC]">
-                                        <table className="w-full min-w-[620px]">
-                                            <thead>
-                                                <tr className="border-b border-[#E6EAED] bg-[#FAFBFC]">
-                                                    <th className="w-[180px] px-4 py-3 text-left text-[11px] font-medium text-[#87949F] uppercase">
+                                    <>
+                                        <div className="mt-5 space-y-3 md:hidden">
+                                            {changeKeys.map((key) => (
+                                                <div
+                                                    key={key}
+                                                    className="min-w-0 rounded-lg border border-[#E5E9EC] p-4"
+                                                >
+                                                    <p className="text-[10px] font-medium tracking-wide text-[#87949F] uppercase">
                                                         Field
-                                                    </th>
+                                                    </p>
 
-                                                    <th className="px-4 py-3 text-left text-[11px] font-medium text-[#87949F] uppercase">
-                                                        Sebelum
-                                                    </th>
+                                                    <p className="mt-1 text-[13px] font-semibold break-words text-[#46545F]">
+                                                        {fieldLabel(key)}
+                                                    </p>
 
-                                                    <th className="px-4 py-3 text-left text-[11px] font-medium text-[#87949F] uppercase">
-                                                        Sesudah
-                                                    </th>
-                                                </tr>
-                                            </thead>
+                                                    <div className="mt-4 grid min-w-0 grid-cols-2 gap-3 border-t border-[#EDF0F2] pt-3">
+                                                        <ChangeValue
+                                                            label="Sebelum"
+                                                            value={humanizeValue(
+                                                                key,
+                                                                oldValues[key],
+                                                            )}
+                                                            muted
+                                                        />
 
-                                            <tbody>
-                                                {changeKeys.map((key) => (
-                                                    <tr
-                                                        key={key}
-                                                        className="border-b border-[#EDF0F2] last:border-b-0"
-                                                    >
-                                                        <td className="px-4 py-4 align-top text-xs font-medium text-[#46545F]">
-                                                            {fieldLabel(key)}
-                                                        </td>
+                                                        <ChangeValue
+                                                            label="Sesudah"
+                                                            value={humanizeValue(
+                                                                key,
+                                                                newValues[key],
+                                                            )}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
 
-                                                        <td className="px-4 py-4 align-top">
-                                                            <pre className="max-w-[300px] font-sans text-[12px] leading-5 break-words whitespace-pre-wrap text-[#7A8791]">
-                                                                {humanizeValue(
-                                                                    key,
-                                                                    oldValues[
-                                                                        key
-                                                                    ],
-                                                                )}
-                                                            </pre>
-                                                        </td>
+                                        <div className="mt-5 hidden overflow-x-auto rounded-lg border border-[#E5E9EC] md:block">
+                                            <table className="w-full min-w-[620px]">
+                                                <thead>
+                                                    <tr className="border-b border-[#E6EAED] bg-[#FAFBFC]">
+                                                        <th className="w-[180px] px-4 py-3 text-left text-[11px] font-medium text-[#87949F] uppercase">
+                                                            Field
+                                                        </th>
 
-                                                        <td className="px-4 py-4 align-top">
-                                                            <pre className="max-w-[300px] font-sans text-[12px] leading-5 font-medium break-words whitespace-pre-wrap text-[#344250]">
-                                                                {humanizeValue(
-                                                                    key,
-                                                                    newValues[
-                                                                        key
-                                                                    ],
-                                                                )}
-                                                            </pre>
-                                                        </td>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-medium text-[#87949F] uppercase">
+                                                            Sebelum
+                                                        </th>
+
+                                                        <th className="px-4 py-3 text-left text-[11px] font-medium text-[#87949F] uppercase">
+                                                            Sesudah
+                                                        </th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+
+                                                <tbody>
+                                                    {changeKeys.map((key) => (
+                                                        <tr
+                                                            key={key}
+                                                            className="border-b border-[#EDF0F2] last:border-b-0"
+                                                        >
+                                                            <td className="px-4 py-4 align-top text-xs font-medium text-[#46545F]">
+                                                                {fieldLabel(
+                                                                    key,
+                                                                )}
+                                                            </td>
+
+                                                            <td className="px-4 py-4 align-top">
+                                                                <pre className="max-w-[300px] font-sans text-[12px] leading-5 break-words whitespace-pre-wrap text-[#7A8791]">
+                                                                    {humanizeValue(
+                                                                        key,
+                                                                        oldValues[
+                                                                            key
+                                                                        ],
+                                                                    )}
+                                                                </pre>
+                                                            </td>
+
+                                                            <td className="px-4 py-4 align-top">
+                                                                <pre className="max-w-[300px] font-sans text-[12px] leading-5 font-medium break-words whitespace-pre-wrap text-[#344250]">
+                                                                    {humanizeValue(
+                                                                        key,
+                                                                        newValues[
+                                                                            key
+                                                                        ],
+                                                                    )}
+                                                                </pre>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </>
                                 )}
                             </section>
 
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5 md:p-6">
+                            <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5 md:p-6">
                                 <SectionTitle
                                     icon={Monitor}
                                     title="Informasi Perangkat"
                                 />
 
-                                <div className="mt-5">
+                                <div className="mt-5 min-w-0">
                                     <Info
                                         label="User Agent"
                                         value={
                                             activityLog.user_agent ??
                                             'Tidak tersedia'
                                         }
+                                        breakAll
                                     />
                                 </div>
                             </section>
                         </div>
 
-                        <div className="space-y-4">
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5">
+                        <div className="min-w-0 space-y-4">
+                            <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5">
                                 <SectionTitle icon={UserRound} title="Pelaku" />
 
-                                <div className="mt-5">
+                                <div className="mt-5 min-w-0">
                                     {activityLog.user ? (
                                         <>
-                                            <p className="text-sm font-semibold text-[#344250]">
+                                            <p className="text-sm font-semibold break-words text-[#344250]">
                                                 {activityLog.user.name}
                                             </p>
 
@@ -359,10 +408,10 @@ export default function ActivityLogShow({ activityLog }: Props) {
                                 </div>
                             </section>
 
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5">
+                            <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5">
                                 <SectionTitle icon={Clock3} title="Waktu" />
 
-                                <div className="mt-5">
+                                <div className="mt-5 min-w-0">
                                     <Info
                                         label="Terjadi Pada"
                                         value={formatDateTime(
@@ -372,24 +421,25 @@ export default function ActivityLogShow({ activityLog }: Props) {
                                 </div>
                             </section>
 
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5">
+                            <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5">
                                 <SectionTitle icon={Globe2} title="Request" />
 
-                                <div className="mt-5">
+                                <div className="mt-5 min-w-0">
                                     <Info
                                         label="IP Address"
                                         value={
                                             activityLog.ip_address ??
                                             'Tidak tersedia'
                                         }
+                                        breakAll
                                     />
                                 </div>
                             </section>
 
-                            <section className="rounded-[10px] border border-[#DDE3E8] bg-white p-5">
+                            <section className="min-w-0 rounded-[10px] border border-[#DDE3E8] bg-white p-4 sm:p-5">
                                 <SectionTitle icon={Database} title="Subject" />
 
-                                <div className="mt-5">
+                                <div className="mt-5 min-w-0">
                                     <p className="text-[11px] font-medium text-[#8A96A0]">
                                         {activityLog.subject.type}
                                     </p>
@@ -397,12 +447,12 @@ export default function ActivityLogShow({ activityLog }: Props) {
                                     {activityLog.subject.href ? (
                                         <Link
                                             href={activityLog.subject.href}
-                                            className="mt-1 block text-sm font-medium break-words text-[#1D5D8F] hover:underline"
+                                            className="mt-1 block min-w-0 text-sm font-medium break-all text-[#1D5D8F] hover:underline"
                                         >
                                             {activityLog.subject.label}
                                         </Link>
                                     ) : (
-                                        <p className="mt-1 text-sm break-words text-[#46545F]">
+                                        <p className="mt-1 min-w-0 text-sm break-all text-[#46545F]">
                                             {activityLog.subject.label}
                                         </p>
                                     )}
@@ -424,24 +474,64 @@ function SectionTitle({
     title: string;
 }) {
     return (
-        <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-[#EEF4F8] text-[#1D5D8F]">
+        <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#EEF4F8] text-[#1D5D8F]">
                 <Icon className="size-4" />
             </div>
 
-            <h2 className="text-[15px] font-semibold text-[#344250]">
+            <h2 className="min-w-0 text-[15px] font-semibold break-words text-[#344250]">
                 {title}
             </h2>
         </div>
     );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function ChangeValue({
+    label,
+    value,
+    muted = false,
+}: {
+    label: string;
+    value: string;
+    muted?: boolean;
+}) {
     return (
-        <div>
+        <div className="min-w-0">
+            <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                {label}
+            </p>
+
+            <pre
+                className={`mt-1 min-w-0 font-sans text-[11px] leading-5 break-words whitespace-pre-wrap ${
+                    muted
+                        ? 'font-normal text-[#7A8791]'
+                        : 'font-medium text-[#344250]'
+                }`}
+            >
+                {value}
+            </pre>
+        </div>
+    );
+}
+
+function Info({
+    label,
+    value,
+    breakAll = false,
+}: {
+    label: string;
+    value: string;
+    breakAll?: boolean;
+}) {
+    return (
+        <div className="min-w-0">
             <p className="text-[11px] font-medium text-[#8A96A0]">{label}</p>
 
-            <p className="mt-1 text-[13px] leading-5 break-words text-[#46545F]">
+            <p
+                className={`mt-1 min-w-0 text-[13px] leading-5 text-[#46545F] ${
+                    breakAll ? 'break-all' : 'break-words'
+                }`}
+            >
                 {value}
             </p>
         </div>

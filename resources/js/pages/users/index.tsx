@@ -12,8 +12,8 @@ import {
     UserRound,
     UserX,
 } from 'lucide-react';
-import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useState } from 'react';
 import {
     index as usersIndex,
     resetPassword,
@@ -113,19 +113,14 @@ export default function UsersIndex({
     const { auth } = usePage().props;
 
     const [search, setSearch] = useState(filters.search);
-
     const [role, setRole] = useState(filters.role);
-
     const [status, setStatus] = useState(filters.status);
-
     const [department, setDepartment] = useState(filters.department);
 
     const [formOpen, setFormOpen] = useState(false);
-
     const [editTarget, setEditTarget] = useState<EditTarget>(null);
 
     const [statusTarget, setStatusTarget] = useState<ManagedUser | null>(null);
-
     const [resetTarget, setResetTarget] = useState<ManagedUser | null>(null);
 
     const [dismissedCredentialKey, setDismissedCredentialKey] = useState<
@@ -133,7 +128,6 @@ export default function UsersIndex({
     >(null);
 
     const [copied, setCopied] = useState(false);
-
     const [actionProcessing, setActionProcessing] = useState(false);
 
     const credentialKey =
@@ -312,19 +306,27 @@ export default function UsersIndex({
         }, 1500);
     };
 
+    const goToPage = (url: string | null) => {
+        if (!url) {
+            return;
+        }
+
+        router.get(url);
+    };
+
     return (
         <>
             <Head title="Pengguna" />
 
-            <div className="flex flex-1 flex-col px-5 py-6 md:px-8 md:py-8">
+            <div className="flex flex-1 flex-col px-4 py-5 sm:px-5 sm:py-6 md:px-8 md:py-8">
                 <div className="mx-auto w-full max-w-[1400px]">
                     <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                         <div>
-                            <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[#17212B]">
+                            <h1 className="text-[26px] font-semibold tracking-[-0.035em] text-[#17212B] sm:text-[28px]">
                                 Pengguna
                             </h1>
 
-                            <p className="mt-1.5 text-sm text-[#71808C]">
+                            <p className="mt-1.5 text-sm leading-6 text-[#71808C]">
                                 Kelola akun, role, unit kerja, dan status akses
                                 pengguna sistem.
                             </p>
@@ -333,7 +335,7 @@ export default function UsersIndex({
                         <Button
                             type="button"
                             onClick={openCreate}
-                            className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
+                            className="h-10 w-full bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76] lg:w-auto"
                         >
                             <Plus className="size-4" />
                             Tambah Pengguna
@@ -342,7 +344,7 @@ export default function UsersIndex({
 
                     <form
                         onSubmit={applyFilters}
-                        className="mt-7 grid gap-3 rounded-[10px] border border-[#DDE3E8] bg-white p-4 lg:grid-cols-[minmax(260px,1fr)_180px_170px_220px_auto_auto]"
+                        className="mt-6 grid gap-3 rounded-[10px] border border-[#DDE3E8] bg-white p-4 md:mt-7 lg:grid-cols-[minmax(260px,1fr)_180px_170px_220px_auto_auto]"
                     >
                         <div className="relative">
                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8C98A2]" />
@@ -360,7 +362,7 @@ export default function UsersIndex({
                         <select
                             value={role}
                             onChange={(event) => setRole(event.target.value)}
-                            className="h-10 rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#52616D]"
+                            className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#52616D]"
                         >
                             <option value="">Semua role</option>
 
@@ -374,7 +376,7 @@ export default function UsersIndex({
                         <select
                             value={status}
                             onChange={(event) => setStatus(event.target.value)}
-                            className="h-10 rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#52616D]"
+                            className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#52616D]"
                         >
                             <option value="">Semua status</option>
                             <option value="active">Aktif</option>
@@ -386,7 +388,7 @@ export default function UsersIndex({
                             onChange={(event) =>
                                 setDepartment(event.target.value)
                             }
-                            className="h-10 rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#52616D]"
+                            className="h-10 w-full rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#52616D]"
                         >
                             <option value="">Semua unit</option>
 
@@ -397,25 +399,27 @@ export default function UsersIndex({
                             ))}
                         </select>
 
-                        <Button
-                            type="submit"
-                            className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
-                        >
-                            Terapkan
-                        </Button>
+                        <div className="grid grid-cols-2 gap-3 lg:contents">
+                            <Button
+                                type="submit"
+                                className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
+                            >
+                                Terapkan
+                            </Button>
 
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={resetFilters}
-                            className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none"
-                        >
-                            Reset
-                        </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={resetFilters}
+                                className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9]"
+                            >
+                                Reset
+                            </Button>
+                        </div>
                     </form>
 
                     <section className="mt-4 overflow-hidden rounded-[10px] border border-[#DDE3E8] bg-white">
-                        <div className="border-b border-[#E5E9EC] px-5 py-4">
+                        <div className="border-b border-[#E5E9EC] px-4 py-4 sm:px-5">
                             <h2 className="text-[15px] font-semibold text-[#344250]">
                                 Daftar Pengguna
                             </h2>
@@ -442,7 +446,184 @@ export default function UsersIndex({
                             </div>
                         ) : (
                             <>
-                                <div className="overflow-x-auto">
+                                <div className="divide-y divide-[#EDF0F2] lg:hidden">
+                                    {users.data.map((user) => {
+                                        const isSelf =
+                                            auth.user?.id === user.id;
+                                        const isActive =
+                                            user.status === 'active';
+
+                                        return (
+                                            <div
+                                                key={user.id}
+                                                className="px-4 py-4 sm:px-5"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#EAF3FA] text-xs font-semibold text-[#1D5D8F]">
+                                                        {user.name
+                                                            .slice(0, 2)
+                                                            .toUpperCase()}
+                                                    </div>
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <p className="min-w-0 text-sm font-semibold break-words text-[#344250]">
+                                                                {user.name}
+                                                            </p>
+
+                                                            {isSelf && (
+                                                                <span className="rounded-full bg-[#EEF4F8] px-2 py-0.5 text-[9px] font-medium text-[#1D5D8F]">
+                                                                    Anda
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <p className="mt-1 text-[11px] break-all text-[#87949F]">
+                                                            {user.email}
+                                                        </p>
+
+                                                        {user.nip && (
+                                                            <p className="mt-1 font-mono text-[10px] break-all text-[#9AA4AC]">
+                                                                NIP {user.nip}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <span
+                                                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                                                            isActive
+                                                                ? 'bg-[#EAF6EF] text-[#287A4B]'
+                                                                : 'bg-[#F1F3F5] text-[#71808C]'
+                                                        }`}
+                                                    >
+                                                        {isActive
+                                                            ? 'Aktif'
+                                                            : 'Nonaktif'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                                                            Role
+                                                        </p>
+
+                                                        <p className="mt-1 text-[11px] leading-4 text-[#5F6D78]">
+                                                            {user.role?.name ??
+                                                                '—'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                                                            Unit / Bidang
+                                                        </p>
+
+                                                        <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#5F6D78]">
+                                                            {user.department
+                                                                ?.name ?? '—'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                                                            Jabatan
+                                                        </p>
+
+                                                        <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#5F6D78]">
+                                                            {user.position ??
+                                                                '—'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                                                            BAST Dibuat
+                                                        </p>
+
+                                                        <p className="mt-1 text-[11px] leading-4 text-[#5F6D78]">
+                                                            {
+                                                                user.created_basts_count
+                                                            }{' '}
+                                                            dokumen
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#EDF0F2] pt-3">
+                                                    <Button
+                                                        asChild
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="h-9 border-[#D7DEE4] bg-white px-2 text-xs text-[#1D5D8F] shadow-none"
+                                                    >
+                                                        <Link
+                                                            href={showUser(
+                                                                user.id,
+                                                            )}
+                                                        >
+                                                            <Eye className="size-3.5" />
+                                                            Lihat
+                                                        </Link>
+                                                    </Button>
+
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            openEdit(user)
+                                                        }
+                                                        className="h-9 border-[#D7DEE4] bg-white px-2 text-xs text-[#52616D] shadow-none"
+                                                    >
+                                                        <PencilLine className="size-3.5" />
+                                                        Edit
+                                                    </Button>
+
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        disabled={isSelf}
+                                                        onClick={() =>
+                                                            setResetTarget(user)
+                                                        }
+                                                        className="h-9 border-[#E4D9C5] bg-white px-2 text-xs text-[#7B5A24] shadow-none disabled:opacity-30"
+                                                    >
+                                                        <KeyRound className="size-3.5" />
+                                                        Reset Password
+                                                    </Button>
+
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        disabled={isSelf}
+                                                        onClick={() =>
+                                                            setStatusTarget(
+                                                                user,
+                                                            )
+                                                        }
+                                                        className={`h-9 bg-white px-2 text-xs shadow-none disabled:opacity-30 ${
+                                                            isActive
+                                                                ? 'border-[#E3CACA] text-[#B44949]'
+                                                                : 'border-[#CFE2D7] text-[#287A4B]'
+                                                        }`}
+                                                    >
+                                                        {isActive ? (
+                                                            <UserX className="size-3.5" />
+                                                        ) : (
+                                                            <UserCheck className="size-3.5" />
+                                                        )}
+
+                                                        {isActive
+                                                            ? 'Nonaktifkan'
+                                                            : 'Aktifkan'}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="hidden overflow-x-auto lg:block">
                                     <table className="w-full min-w-[1150px]">
                                         <thead className="bg-[#FAFBFC]">
                                             <tr className="border-b border-[#E6EAED]">
@@ -497,7 +678,7 @@ export default function UsersIndex({
                                                                         .toUpperCase()}
                                                                 </div>
 
-                                                                <div>
+                                                                <div className="min-w-0">
                                                                     <div className="flex items-center gap-2">
                                                                         <p className="text-[13px] font-medium text-[#344250]">
                                                                             {
@@ -658,49 +839,47 @@ export default function UsersIndex({
                                     </table>
                                 </div>
 
-                                <div className="flex flex-col gap-3 border-t border-[#E6EAED] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <p className="text-xs text-[#87949F]">
-                                        Menampilkan {users.from ?? 0}–
-                                        {users.to ?? 0} dari {users.total}
-                                    </p>
+                                <div className="border-t border-[#E6EAED] px-4 py-4 sm:px-5">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <p className="text-center text-xs text-[#87949F] sm:text-left">
+                                            Menampilkan {users.from ?? 0}–
+                                            {users.to ?? 0} dari {users.total}
+                                        </p>
 
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled={!users.prev_page_url}
-                                            onClick={() => {
-                                                if (users.prev_page_url) {
-                                                    router.get(
+                                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={!users.prev_page_url}
+                                                onClick={() =>
+                                                    goToPage(
                                                         users.prev_page_url,
-                                                    );
+                                                    )
                                                 }
-                                            }}
-                                            className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
-                                        >
-                                            Sebelumnya
-                                        </Button>
+                                                className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
+                                            >
+                                                Sebelumnya
+                                            </Button>
 
-                                        <span className="text-xs text-[#657481]">
-                                            {users.current_page} /{' '}
-                                            {users.last_page}
-                                        </span>
+                                            <span className="px-1 text-center text-xs whitespace-nowrap text-[#657481]">
+                                                {users.current_page} /{' '}
+                                                {users.last_page}
+                                            </span>
 
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled={!users.next_page_url}
-                                            onClick={() => {
-                                                if (users.next_page_url) {
-                                                    router.get(
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={!users.next_page_url}
+                                                onClick={() =>
+                                                    goToPage(
                                                         users.next_page_url,
-                                                    );
+                                                    )
                                                 }
-                                            }}
-                                            className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
-                                        >
-                                            Berikutnya
-                                        </Button>
+                                                className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
+                                            >
+                                                Berikutnya
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </>
@@ -717,7 +896,7 @@ export default function UsersIndex({
                     }
                 }}
             >
-                <DialogContent className="bast-app max-h-[90vh] overflow-y-auto border-[#DDE3E8] bg-white sm:max-w-[620px]">
+                <DialogContent className="bast-app max-h-[90vh] w-[calc(100%-2rem)] overflow-y-auto border-[#DDE3E8] bg-white sm:max-w-[620px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             {editTarget ? 'Edit Pengguna' : 'Tambah Pengguna'}
@@ -808,6 +987,7 @@ export default function UsersIndex({
                                             disabled={!item.is_active}
                                         >
                                             {item.name}
+
                                             {!item.is_active
                                                 ? ' — Nonaktif'
                                                 : ''}
@@ -839,6 +1019,7 @@ export default function UsersIndex({
                                             disabled={!item.is_active}
                                         >
                                             {item.name}
+
                                             {!item.is_active
                                                 ? ' — Nonaktif'
                                                 : ''}
@@ -864,7 +1045,7 @@ export default function UsersIndex({
                                 variant="outline"
                                 disabled={processing}
                                 onClick={closeForm}
-                                className="border-[#D7DEE4] bg-white text-[#52616D]"
+                                className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                             >
                                 Batal
                             </Button>
@@ -872,7 +1053,7 @@ export default function UsersIndex({
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                                className="w-full bg-[#1D5D8F] text-white hover:bg-[#174C76] sm:w-auto"
                             >
                                 {processing
                                     ? 'Menyimpan...'
@@ -893,7 +1074,7 @@ export default function UsersIndex({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             {statusTarget?.status === 'active'
@@ -901,7 +1082,7 @@ export default function UsersIndex({
                                 : 'Aktifkan pengguna?'}
                         </DialogTitle>
 
-                        <DialogDescription className="leading-6 text-[#71808C]">
+                        <DialogDescription className="leading-6 break-words text-[#71808C]">
                             Akun &quot;{statusTarget?.name}&quot; akan{' '}
                             {statusTarget?.status === 'active'
                                 ? 'kehilangan akses ke sistem.'
@@ -922,6 +1103,7 @@ export default function UsersIndex({
                             variant="outline"
                             disabled={actionProcessing}
                             onClick={() => setStatusTarget(null)}
+                            className="w-full sm:w-auto"
                         >
                             Batal
                         </Button>
@@ -930,11 +1112,11 @@ export default function UsersIndex({
                             type="button"
                             disabled={actionProcessing}
                             onClick={runStatusToggle}
-                            className={
+                            className={`w-full sm:w-auto ${
                                 statusTarget?.status === 'active'
                                     ? 'bg-[#B44949] text-white hover:bg-[#9E3D3D]'
                                     : 'bg-[#287A4B] text-white hover:bg-[#21653E]'
-                            }
+                            }`}
                         >
                             {actionProcessing
                                 ? 'Memproses...'
@@ -954,13 +1136,13 @@ export default function UsersIndex({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             Reset kata sandi?
                         </DialogTitle>
 
-                        <DialogDescription className="leading-6 text-[#71808C]">
+                        <DialogDescription className="leading-6 break-words text-[#71808C]">
                             Sistem akan membuat kata sandi sementara baru untuk
                             &quot;{resetTarget?.name}&quot;.
                         </DialogDescription>
@@ -979,6 +1161,7 @@ export default function UsersIndex({
                             variant="outline"
                             disabled={actionProcessing}
                             onClick={() => setResetTarget(null)}
+                            className="w-full sm:w-auto"
                         >
                             Batal
                         </Button>
@@ -987,7 +1170,7 @@ export default function UsersIndex({
                             type="button"
                             disabled={actionProcessing}
                             onClick={runPasswordReset}
-                            className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                            className="w-full bg-[#1D5D8F] text-white hover:bg-[#174C76] sm:w-auto"
                         >
                             {actionProcessing
                                 ? 'Mereset...'
@@ -1005,7 +1188,7 @@ export default function UsersIndex({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[520px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[520px]">
                     <DialogHeader>
                         <div className="mb-2 flex size-11 items-center justify-center rounded-xl bg-[#EAF6EF] text-[#287A4B]">
                             <ShieldCheck className="size-5" />
@@ -1023,12 +1206,12 @@ export default function UsersIndex({
                     </DialogHeader>
 
                     {temporaryCredential && (
-                        <div className="mt-2 rounded-[10px] border border-[#DDE3E8] bg-[#F8FAFB] p-4">
+                        <div className="mt-2 min-w-0 rounded-[10px] border border-[#DDE3E8] bg-[#F8FAFB] p-4">
                             <p className="text-xs font-medium text-[#87949F]">
                                 Pengguna
                             </p>
 
-                            <p className="mt-1 text-sm font-semibold text-[#344250]">
+                            <p className="mt-1 text-sm font-semibold break-words text-[#344250]">
                                 {temporaryCredential.name}
                             </p>
 
@@ -1052,6 +1235,7 @@ export default function UsersIndex({
                             type="button"
                             variant="outline"
                             onClick={dismissCredential}
+                            className="w-full sm:w-auto"
                         >
                             Tutup
                         </Button>
@@ -1059,7 +1243,7 @@ export default function UsersIndex({
                         <Button
                             type="button"
                             onClick={copyCredential}
-                            className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                            className="w-full bg-[#1D5D8F] text-white hover:bg-[#174C76] sm:w-auto"
                         >
                             {copied ? (
                                 <Check className="size-4" />
@@ -1086,7 +1270,7 @@ function FormField({
     children: React.ReactNode;
 }) {
     return (
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
             <Label>{label}</Label>
 
             {children}
@@ -1106,13 +1290,13 @@ function CredentialRow({
     mono?: boolean;
 }) {
     return (
-        <div>
+        <div className="min-w-0">
             <p className="text-[10px] font-medium text-[#8B97A1] uppercase">
                 {label}
             </p>
 
             <p
-                className={`mt-1 text-sm text-[#344250] ${
+                className={`mt-1 text-sm break-all text-[#344250] ${
                     mono ? 'font-mono font-semibold tracking-wide' : ''
                 }`}
             >

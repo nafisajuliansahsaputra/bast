@@ -6,6 +6,7 @@ import {
     LayoutDashboard,
     ScrollText,
     UsersRound,
+    X,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -18,6 +19,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
@@ -42,6 +44,9 @@ const primaryNavItems: NavItem[] = [
 
 export function AppSidebar() {
     const { auth } = usePage().props;
+
+    const { isMobile, setOpenMobile } = useSidebar();
+
     const roleSlug = auth.user?.role?.slug;
 
     const canManage = roleSlug === 'super-admin' || roleSlug === 'admin';
@@ -72,26 +77,45 @@ export function AppSidebar() {
         });
     }
 
+    const closeMobileSidebar = () => {
+        if (isMobile) {
+            setOpenMobile(false);
+        }
+    };
+
     return (
         <Sidebar
             collapsible="icon"
             variant="sidebar"
             className="border-r border-[#234C68] bg-[#123C5E] text-white [&_[data-sidebar=sidebar]]:bg-[#123C5E]"
         >
-            <SidebarHeader className="border-b border-white/[0.07] bg-[#123C5E] p-3">
+            <SidebarHeader className="relative border-b border-white/[0.07] bg-[#123C5E] p-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             size="lg"
                             asChild
-                            className="h-12 rounded-lg hover:bg-white/[0.06]"
+                            className="h-12 rounded-lg hover:bg-white/[0.06] max-md:pr-12"
                         >
-                            <Link href={dashboard()} prefetch>
+                            <Link
+                                href={dashboard()}
+                                prefetch
+                                onClick={closeMobileSidebar}
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+
+                <button
+                    type="button"
+                    onClick={() => setOpenMobile(false)}
+                    className="absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white md:hidden"
+                    aria-label="Tutup menu"
+                >
+                    <X className="size-4.5" />
+                </button>
             </SidebarHeader>
 
             <SidebarContent className="bg-[#123C5E] py-3">

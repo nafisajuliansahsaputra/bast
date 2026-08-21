@@ -1,7 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Activity, Eye, Search } from 'lucide-react';
-import { useState } from 'react';
+import {
+    Activity,
+    CalendarDays,
+    ChevronRight,
+    Eye,
+    Globe2,
+    Search,
+    UserRound,
+} from 'lucide-react';
 import type { FormEvent } from 'react';
+import { useState } from 'react';
 import {
     index as activityLogsIndex,
     show as showActivityLog,
@@ -160,18 +168,26 @@ export default function ActivityLogIndex({
         router.get(activityLogsIndex.url());
     };
 
+    const goToPage = (url: string | null) => {
+        if (!url) {
+            return;
+        }
+
+        router.get(url);
+    };
+
     return (
         <>
             <Head title="Activity Log" />
 
-            <div className="flex min-w-0 flex-1 flex-col px-5 py-6 md:px-8 md:py-8">
+            <div className="flex min-w-0 flex-1 flex-col px-4 py-5 sm:px-5 sm:py-6 md:px-8 md:py-8">
                 <div className="mx-auto w-full max-w-[1400px] min-w-0">
                     <div>
-                        <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[#17212B]">
+                        <h1 className="text-[26px] font-semibold tracking-[-0.035em] text-[#17212B] sm:text-[28px]">
                             Activity Log
                         </h1>
 
-                        <p className="mt-1.5 text-sm text-[#71808C]">
+                        <p className="mt-1.5 text-sm leading-6 text-[#71808C]">
                             Pantau riwayat aktivitas dan perubahan penting yang
                             terjadi di dalam sistem.
                         </p>
@@ -179,7 +195,7 @@ export default function ActivityLogIndex({
 
                     <form
                         onSubmit={applyFilters}
-                        className="mt-7 grid gap-3 rounded-[10px] border border-[#DDE3E8] bg-white p-4 xl:grid-cols-[minmax(220px,1fr)_180px_200px_155px_155px_auto_auto]"
+                        className="mt-6 grid gap-3 rounded-[10px] border border-[#DDE3E8] bg-white p-4 md:mt-7 xl:grid-cols-[minmax(220px,1fr)_180px_200px_155px_155px_auto_auto]"
                     >
                         <div className="relative min-w-0">
                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8C98A2]" />
@@ -240,25 +256,27 @@ export default function ActivityLogIndex({
                             aria-label="Tanggal akhir"
                         />
 
-                        <Button
-                            type="submit"
-                            className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
-                        >
-                            Terapkan
-                        </Button>
+                        <div className="grid grid-cols-2 gap-3 xl:contents">
+                            <Button
+                                type="submit"
+                                className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
+                            >
+                                Terapkan
+                            </Button>
 
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={resetFilters}
-                            className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none"
-                        >
-                            Reset
-                        </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={resetFilters}
+                                className="h-10 border-[#D7DEE4] bg-white px-4 text-[#52616D] shadow-none hover:bg-[#F5F7F9]"
+                            >
+                                Reset
+                            </Button>
+                        </div>
                     </form>
 
                     <section className="mt-4 min-w-0 overflow-hidden rounded-[10px] border border-[#DDE3E8] bg-white">
-                        <div className="border-b border-[#E5E9EC] px-5 py-4">
+                        <div className="border-b border-[#E5E9EC] px-4 py-4 sm:px-5">
                             <h2 className="text-[15px] font-semibold text-[#344250]">
                                 Riwayat Aktivitas
                             </h2>
@@ -285,7 +303,141 @@ export default function ActivityLogIndex({
                             </div>
                         ) : (
                             <>
-                                <div className="w-full overflow-x-auto">
+                                <div className="divide-y divide-[#EDF0F2] lg:hidden">
+                                    {activityLogs.data.map((log) => (
+                                        <div
+                                            key={log.id}
+                                            className="px-4 py-4 sm:px-5"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-semibold break-words text-[#344250]">
+                                                        {log.action_label}
+                                                    </p>
+
+                                                    <p className="mt-1 text-[11px] leading-5 break-words text-[#7B8994]">
+                                                        {log.description ??
+                                                            log.action}
+                                                    </p>
+
+                                                    <p className="mt-1 font-mono text-[9px] break-all text-[#A0A9B0]">
+                                                        {log.action}
+                                                    </p>
+                                                </div>
+
+                                                <span
+                                                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                                                        categoryStyles[
+                                                            log.category.key
+                                                        ] ??
+                                                        categoryStyles.other
+                                                    }`}
+                                                >
+                                                    {log.category.label}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                                                <div>
+                                                    <p className="flex items-center gap-1.5 text-[10px] font-medium text-[#929DA6] uppercase">
+                                                        <CalendarDays className="size-3" />
+                                                        Waktu
+                                                    </p>
+
+                                                    <p className="mt-1 text-[11px] leading-4 text-[#5F6D78]">
+                                                        {formatDateTime(
+                                                            log.created_at,
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p className="flex items-center gap-1.5 text-[10px] font-medium text-[#929DA6] uppercase">
+                                                        <Globe2 className="size-3" />
+                                                        IP
+                                                    </p>
+
+                                                    <p className="mt-1 font-mono text-[10px] leading-4 break-all text-[#5F6D78]">
+                                                        {log.ip_address ?? '—'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 rounded-lg border border-[#EDF0F2] bg-[#FAFBFC] p-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#EAF3FA] text-[10px] font-semibold text-[#1D5D8F]">
+                                                        {log.user ? (
+                                                            log.user.name
+                                                                .slice(0, 2)
+                                                                .toUpperCase()
+                                                        ) : (
+                                                            <UserRound className="size-3.5" />
+                                                        )}
+                                                    </div>
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                                                            Pengguna
+                                                        </p>
+
+                                                        <p className="mt-1 text-[11px] font-medium break-words text-[#46545F]">
+                                                            {log.user?.name ??
+                                                                'Sistem'}
+                                                        </p>
+
+                                                        {log.user && (
+                                                            <p className="mt-0.5 text-[10px] break-all text-[#929DA6]">
+                                                                {log.user.email}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-3 min-w-0">
+                                                <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                                                    Subject
+                                                </p>
+
+                                                <p className="mt-1 text-[10px] text-[#929DA6]">
+                                                    {log.subject.type}
+                                                </p>
+
+                                                {log.subject.href ? (
+                                                    <Link
+                                                        href={log.subject.href}
+                                                        className="mt-1 block text-[11px] font-medium break-words text-[#1D5D8F]"
+                                                    >
+                                                        {log.subject.label}
+                                                    </Link>
+                                                ) : (
+                                                    <p className="mt-1 text-[11px] break-words text-[#5F6D78]">
+                                                        {log.subject.label}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <Button
+                                                asChild
+                                                type="button"
+                                                variant="outline"
+                                                className="mt-4 h-9 w-full border-[#D7DEE4] bg-white text-xs text-[#1D5D8F] shadow-none"
+                                            >
+                                                <Link
+                                                    href={showActivityLog(
+                                                        log.id,
+                                                    )}
+                                                >
+                                                    <Eye className="size-3.5" />
+                                                    Lihat Detail
+                                                    <ChevronRight className="ml-auto size-3.5" />
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="hidden w-full overflow-x-auto lg:block">
                                     <table className="w-full min-w-[980px] table-fixed">
                                         <colgroup>
                                             <col className="w-[13%]" />
@@ -489,58 +641,52 @@ export default function ActivityLogIndex({
                                     </table>
                                 </div>
 
-                                <div className="flex flex-col gap-3 border-t border-[#E6EAED] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <p className="text-xs text-[#87949F]">
-                                        Menampilkan {activityLogs.from ?? 0}–
-                                        {activityLogs.to ?? 0} dari{' '}
-                                        {activityLogs.total}
-                                    </p>
+                                <div className="border-t border-[#E6EAED] px-4 py-4 sm:px-5">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <p className="text-center text-xs text-[#87949F] sm:text-left">
+                                            Menampilkan {activityLogs.from ?? 0}
+                                            –{activityLogs.to ?? 0} dari{' '}
+                                            {activityLogs.total}
+                                        </p>
 
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled={
-                                                !activityLogs.prev_page_url
-                                            }
-                                            onClick={() => {
-                                                if (
-                                                    activityLogs.prev_page_url
-                                                ) {
-                                                    router.get(
+                                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={
+                                                    !activityLogs.prev_page_url
+                                                }
+                                                onClick={() =>
+                                                    goToPage(
                                                         activityLogs.prev_page_url,
-                                                    );
+                                                    )
                                                 }
-                                            }}
-                                            className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
-                                        >
-                                            Sebelumnya
-                                        </Button>
+                                                className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
+                                            >
+                                                Sebelumnya
+                                            </Button>
 
-                                        <span className="text-xs text-[#657481]">
-                                            {activityLogs.current_page} /{' '}
-                                            {activityLogs.last_page}
-                                        </span>
+                                            <span className="px-1 text-center text-xs whitespace-nowrap text-[#657481]">
+                                                {activityLogs.current_page} /{' '}
+                                                {activityLogs.last_page}
+                                            </span>
 
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled={
-                                                !activityLogs.next_page_url
-                                            }
-                                            onClick={() => {
-                                                if (
-                                                    activityLogs.next_page_url
-                                                ) {
-                                                    router.get(
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={
+                                                    !activityLogs.next_page_url
+                                                }
+                                                onClick={() =>
+                                                    goToPage(
                                                         activityLogs.next_page_url,
-                                                    );
+                                                    )
                                                 }
-                                            }}
-                                            className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
-                                        >
-                                            Berikutnya
-                                        </Button>
+                                                className="h-8 border-[#D7DEE4] bg-white px-3 text-xs"
+                                            >
+                                                Berikutnya
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </>

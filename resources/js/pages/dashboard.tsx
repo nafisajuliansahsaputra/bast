@@ -110,21 +110,18 @@ const kpiItems = [
         description: 'Seluruh berita acara',
         icon: ClipboardList,
     },
-
     {
         key: 'draft' as const,
         title: 'Draft',
         description: 'Belum pernah difinalisasi',
         icon: FileClock,
     },
-
     {
         key: 'completed' as const,
         title: 'Selesai',
         description: 'Proses serah terima selesai',
         icon: CheckCircle2,
     },
-
     {
         key: 'archived' as const,
         title: 'Arsip',
@@ -366,7 +363,7 @@ export default function Dashboard({
                     <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.65fr)]">
                         <section className="overflow-hidden rounded-[10px] border border-[#DDE3E8] bg-white">
                             <div className="flex items-center justify-between gap-4 border-b border-[#E7EBEE] px-5 py-4 md:px-6">
-                                <div>
+                                <div className="min-w-0">
                                     <h2 className="text-[15px] font-semibold text-[#25313C]">
                                         Berita Acara Terbaru
                                     </h2>
@@ -378,7 +375,7 @@ export default function Dashboard({
 
                                 <Link
                                     href="/bast"
-                                    className="flex items-center gap-1 text-xs font-medium text-[#1D5D8F] hover:text-[#174C76]"
+                                    className="flex shrink-0 items-center gap-1 text-xs font-medium text-[#1D5D8F] hover:text-[#174C76]"
                                 >
                                     Lihat semua
                                     <ChevronRight className="size-3.5" />
@@ -406,73 +403,137 @@ export default function Dashboard({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[720px]">
-                                        <thead>
-                                            <tr className="border-b border-[#E7EBEE] bg-[#FAFBFC]">
-                                                <th className="px-6 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
-                                                    Dokumen
-                                                </th>
+                                <>
+                                    <div className="divide-y divide-[#EDF0F2] sm:hidden">
+                                        {recentBasts.map((bast) => {
+                                            const style =
+                                                statusStyles[bast.status] ??
+                                                statusStyles.draft;
 
-                                                <th className="px-4 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
-                                                    Jenis
-                                                </th>
-
-                                                <th className="px-4 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
-                                                    Tanggal
-                                                </th>
-
-                                                <th className="px-6 py-3 text-right text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
-                                                    Status
-                                                </th>
-                                            </tr>
-                                        </thead>
-
-                                        <tbody>
-                                            {recentBasts.map((bast) => {
-                                                const style =
-                                                    statusStyles[bast.status] ??
-                                                    statusStyles.draft;
-
-                                                return (
-                                                    <tr
-                                                        key={bast.uuid}
-                                                        className="border-b border-[#EDF0F2] last:border-b-0"
-                                                    >
-                                                        <td className="px-6 py-4">
-                                                            <p className="max-w-[310px] truncate text-[13px] font-medium text-[#344250]">
+                                            return (
+                                                <Link
+                                                    key={bast.uuid}
+                                                    href={`/bast/${bast.uuid}`}
+                                                    className="block px-5 py-4 transition-colors active:bg-[#F7F9FA]"
+                                                >
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="truncate text-[13px] font-semibold text-[#344250]">
                                                                 {bast.title}
                                                             </p>
 
-                                                            <p className="mt-1 font-mono text-[10px] text-[#8B97A1]">
+                                                            <p className="mt-1 truncate font-mono text-[10px] text-[#8B97A1]">
                                                                 {bast.documentNumber ??
                                                                     'Belum bernomor'}
                                                             </p>
-                                                        </td>
+                                                        </div>
 
-                                                        <td className="px-4 py-4 text-[12px] text-[#64727D]">
-                                                            {bast.type ?? '—'}
-                                                        </td>
+                                                        <span
+                                                            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${style.badge}`}
+                                                        >
+                                                            {style.label}
+                                                        </span>
+                                                    </div>
 
-                                                        <td className="px-4 py-4 text-[12px] text-[#64727D]">
+                                                    <div className="mt-3 flex items-start justify-between gap-4">
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-[11px] text-[#64727D]">
+                                                                {bast.type ??
+                                                                    'Jenis BAST belum tersedia'}
+                                                            </p>
+
+                                                            {bast.department && (
+                                                                <p className="mt-1 truncate text-[10px] text-[#929DA6]">
+                                                                    {
+                                                                        bast.department
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </div>
+
+                                                        <p className="shrink-0 text-[10px] text-[#87949F]">
                                                             {formatDate(
                                                                 bast.documentDate,
                                                             )}
-                                                        </td>
+                                                        </p>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
 
-                                                        <td className="px-6 py-4 text-right">
-                                                            <span
-                                                                className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${style.badge}`}
-                                                            >
-                                                                {style.label}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                    <div className="hidden overflow-x-auto sm:block">
+                                        <table className="w-full min-w-[720px]">
+                                            <thead>
+                                                <tr className="border-b border-[#E7EBEE] bg-[#FAFBFC]">
+                                                    <th className="px-6 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
+                                                        Dokumen
+                                                    </th>
+
+                                                    <th className="px-4 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
+                                                        Jenis
+                                                    </th>
+
+                                                    <th className="px-4 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
+                                                        Tanggal
+                                                    </th>
+
+                                                    <th className="px-6 py-3 text-right text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
+                                                        Status
+                                                    </th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {recentBasts.map((bast) => {
+                                                    const style =
+                                                        statusStyles[
+                                                            bast.status
+                                                        ] ?? statusStyles.draft;
+
+                                                    return (
+                                                        <tr
+                                                            key={bast.uuid}
+                                                            className="border-b border-[#EDF0F2] last:border-b-0"
+                                                        >
+                                                            <td className="px-6 py-4">
+                                                                <p className="max-w-[310px] truncate text-[13px] font-medium text-[#344250]">
+                                                                    {bast.title}
+                                                                </p>
+
+                                                                <p className="mt-1 font-mono text-[10px] text-[#8B97A1]">
+                                                                    {bast.documentNumber ??
+                                                                        'Belum bernomor'}
+                                                                </p>
+                                                            </td>
+
+                                                            <td className="px-4 py-4 text-[12px] text-[#64727D]">
+                                                                {bast.type ??
+                                                                    '—'}
+                                                            </td>
+
+                                                            <td className="px-4 py-4 text-[12px] text-[#64727D]">
+                                                                {formatDate(
+                                                                    bast.documentDate,
+                                                                )}
+                                                            </td>
+
+                                                            <td className="px-6 py-4 text-right">
+                                                                <span
+                                                                    className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${style.badge}`}
+                                                                >
+                                                                    {
+                                                                        style.label
+                                                                    }
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>
                             )}
                         </section>
 

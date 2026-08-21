@@ -1,8 +1,5 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
-    Check,
-    ChevronLeft,
-    ChevronRight,
     FileCheck2,
     FileText,
     PackagePlus,
@@ -12,6 +9,8 @@ import {
     UsersRound,
 } from 'lucide-react';
 import { useState } from 'react';
+import { BastFormNavigation } from '@/components/bast/bast-form-navigation';
+import { BastFormStepper } from '@/components/bast/bast-form-stepper';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -232,58 +231,11 @@ export default function BastCreate({
                         </p>
                     </div>
 
-                    <div className="mt-7 overflow-x-auto rounded-[10px] border border-[#DDE3E8] bg-white p-4">
-                        <div className="flex min-w-[720px] items-center">
-                            {steps.map((item, index) => {
-                                const Icon = item.icon;
-                                const completed = index < step;
-                                const active = index === step;
-
-                                return (
-                                    <div
-                                        key={item.title}
-                                        className="flex flex-1 items-center"
-                                    >
-                                        <button
-                                            type="button"
-                                            onClick={() => setStep(index)}
-                                            className="flex items-center gap-2"
-                                        >
-                                            <span
-                                                className={`flex size-8 items-center justify-center rounded-full ${
-                                                    completed
-                                                        ? 'bg-[#EAF6EF] text-[#287A4B]'
-                                                        : active
-                                                          ? 'bg-[#1D5D8F] text-white'
-                                                          : 'bg-[#F1F4F6] text-[#85919B]'
-                                                }`}
-                                            >
-                                                {completed ? (
-                                                    <Check className="size-4" />
-                                                ) : (
-                                                    <Icon className="size-4" />
-                                                )}
-                                            </span>
-
-                                            <span
-                                                className={`text-xs font-medium ${
-                                                    active
-                                                        ? 'text-[#1D5D8F]'
-                                                        : 'text-[#71808C]'
-                                                }`}
-                                            >
-                                                {item.title}
-                                            </span>
-                                        </button>
-
-                                        {index < steps.length - 1 && (
-                                            <div className="mx-4 h-px flex-1 bg-[#E1E6EA]" />
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <BastFormStepper
+                        steps={steps}
+                        currentStep={step}
+                        onStepChange={setStep}
+                    />
 
                     <div className="mt-4 rounded-[10px] border border-[#DDE3E8] bg-white">
                         {step === 0 && (
@@ -499,7 +451,7 @@ export default function BastCreate({
 
                         {step === 2 && (
                             <div className="p-5 md:p-7">
-                                <div className="flex items-start justify-between gap-5">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
                                     <SectionHeader
                                         title="Item Serah Terima"
                                         description="Tambahkan satu atau lebih item yang menjadi objek serah terima."
@@ -509,7 +461,7 @@ export default function BastCreate({
                                         type="button"
                                         onClick={addItem}
                                         variant="outline"
-                                        className="shrink-0 border-[#D7DEE4]"
+                                        className="w-full border-[#D7DEE4] sm:w-auto sm:shrink-0"
                                     >
                                         <Plus className="size-4" />
                                         Tambah Item
@@ -908,59 +860,19 @@ export default function BastCreate({
                             </div>
                         )}
 
-                        <div className="flex flex-col-reverse justify-between gap-3 border-t border-[#E5E9EC] px-5 py-4 sm:flex-row sm:items-center md:px-7">
-                            <div>
-                                {step === 0 ? (
-                                    <Link
-                                        href="/bast"
-                                        className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-[#657481] hover:bg-[#F3F5F7]"
-                                    >
-                                        Batal
-                                    </Link>
-                                ) : (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                            setStep(Math.max(step - 1, 0))
-                                        }
-                                        className="border-[#D7DEE4]"
-                                    >
-                                        <ChevronLeft className="size-4" />
-                                        Sebelumnya
-                                    </Button>
-                                )}
-                            </div>
-
-                            {step < steps.length - 1 ? (
-                                <Button
-                                    type="button"
-                                    onClick={() =>
-                                        setStep(
-                                            Math.min(
-                                                step + 1,
-                                                steps.length - 1,
-                                            ),
-                                        )
-                                    }
-                                    className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
-                                >
-                                    Selanjutnya
-                                    <ChevronRight className="size-4" />
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="button"
-                                    disabled={processing}
-                                    onClick={submit}
-                                    className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
-                                >
-                                    {processing
-                                        ? 'Menyimpan...'
-                                        : 'Simpan Draft'}
-                                </Button>
-                            )}
-                        </div>
+                        <BastFormNavigation
+                            currentStep={step}
+                            totalSteps={steps.length}
+                            cancelHref="/bast"
+                            processing={processing}
+                            onPrevious={() => setStep(Math.max(step - 1, 0))}
+                            onNext={() =>
+                                setStep(Math.min(step + 1, steps.length - 1))
+                            }
+                            onSubmit={submit}
+                            submitLabel="Simpan Draft"
+                            processingLabel="Menyimpan..."
+                        />
                     </div>
                 </div>
             </div>
