@@ -16,6 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        /*
+         * Railway terminates HTTPS before forwarding the request
+         * to the application container. Trust the cloud proxy so
+         * Laravel correctly generates HTTPS URLs for Vite assets,
+         * fonts, redirects, and routes.
+         */
+        $middleware->trustProxies(at: '*');
+
         $middleware->encryptCookies(except: ['sidebar_state']);
 
         $middleware->alias([
@@ -30,6 +38,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+            fn (Request $request) => $request->is('api/*')
+                || $request->expectsJson(),
         );
-    })->create();
+    })
+    ->create();
