@@ -16,15 +16,18 @@ type BastSummary = {
     title: string;
     status: string;
     document_date: string;
-    updated_at: string;
+    updated_at: string | null;
     items_count: number;
     attachments_count: number;
+
     bast_type: BastType | null;
+
     department: {
         id: number;
         name: string;
         code: string;
     } | null;
+
     creator: {
         id: number;
         name: string;
@@ -43,12 +46,14 @@ type Pagination<T> = {
 
 type Props = {
     basts: Pagination<BastSummary>;
+
     filters: {
         search: string;
         status: string;
         type: string;
         year: string;
     };
+
     bastTypes: BastType[];
     years: number[];
 };
@@ -64,18 +69,22 @@ const statusStyles: Record<
         label: 'Draft',
         className: 'bg-[#F1F3F5] text-[#63717C]',
     },
+
+    revision: {
+        label: 'Draft Revisi',
+        className: 'bg-[#FFF4DF] text-[#9A6718]',
+    },
+
     finalized: {
         label: 'Finalized',
         className: 'bg-[#EAF3FA] text-[#1D5D8F]',
     },
+
     completed: {
         label: 'Selesai',
         className: 'bg-[#EAF6EF] text-[#287A4B]',
     },
-    archived: {
-        label: 'Diarsipkan',
-        className: 'bg-[#EDF0F3] text-[#53616D]',
-    },
+
     cancelled: {
         label: 'Dibatalkan',
         className: 'bg-[#FCECEC] text-[#B64040]',
@@ -84,6 +93,7 @@ const statusStyles: Record<
 
 function formatDate(value: string): string {
     const datePart = value.slice(0, 10);
+
     const date = new Date(`${datePart}T00:00:00`);
 
     if (Number.isNaN(date.getTime())) {
@@ -99,8 +109,11 @@ function formatDate(value: string): string {
 
 export default function BastIndex({ basts, filters, bastTypes, years }: Props) {
     const [search, setSearch] = useState(filters.search);
+
     const [status, setStatus] = useState(filters.status);
+
     const [type, setType] = useState(filters.type);
+
     const [year, setYear] = useState(filters.year);
 
     const applyFilters = (
@@ -154,8 +167,8 @@ export default function BastIndex({ basts, filters, bastTypes, years }: Props) {
                             </h1>
 
                             <p className="mt-1.5 text-sm leading-6 text-[#71808C]">
-                                Kelola seluruh dokumen Berita Acara Serah
-                                Terima.
+                                Kelola dokumen BAST aktif dan proses serah
+                                terima.
                             </p>
                         </div>
 
@@ -191,13 +204,18 @@ export default function BastIndex({ basts, filters, bastTypes, years }: Props) {
                                 onChange={(event) =>
                                     setStatus(event.target.value)
                                 }
-                                className="h-10 rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#4D5B66] outline-none focus:border-[#1D5D8F] xl:w-[170px]"
+                                className="h-10 rounded-lg border border-[#D7DEE4] bg-white px-3 text-sm text-[#4D5B66] outline-none focus:border-[#1D5D8F] xl:w-[180px]"
                             >
                                 <option value="">Semua status</option>
+
                                 <option value="draft">Draft</option>
+
+                                <option value="revision">Draft Revisi</option>
+
                                 <option value="finalized">Finalized</option>
+
                                 <option value="completed">Selesai</option>
-                                <option value="archived">Diarsipkan</option>
+
                                 <option value="cancelled">Dibatalkan</option>
                             </select>
 
@@ -243,6 +261,7 @@ export default function BastIndex({ basts, filters, bastTypes, years }: Props) {
                                 <SlidersHorizontal className="size-4" />
                                 Terapkan
                             </Button>
+
                             <Button
                                 type="button"
                                 variant="outline"
@@ -346,7 +365,7 @@ export default function BastIndex({ basts, filters, bastTypes, years }: Props) {
                                                                 {bast.title}
                                                             </p>
 
-                                                            <p className="mt-1 text-[11px] text-[#8B97A1]">
+                                                            <p className="mt-1 font-mono text-[10px] text-[#8B97A1]">
                                                                 {bast.document_number ??
                                                                     'Belum bernomor'}
                                                             </p>

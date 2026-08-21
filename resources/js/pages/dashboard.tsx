@@ -15,6 +15,7 @@ import { dashboard } from '@/routes';
 type DashboardStats = {
     total: number;
     draft: number;
+    revision: number;
     completed: number;
     archived: number;
 };
@@ -70,21 +71,31 @@ const statusStyles: Record<
         badge: 'bg-[#F1F3F5] text-[#63717C]',
         bar: 'bg-[#87939D]',
     },
+
+    revision: {
+        label: 'Draft Revisi',
+        badge: 'bg-[#FFF4DF] text-[#9A6718]',
+        bar: 'bg-[#B77B20]',
+    },
+
     finalized: {
         label: 'Finalized',
         badge: 'bg-[#EAF3FA] text-[#1D5D8F]',
         bar: 'bg-[#1D5D8F]',
     },
+
     completed: {
         label: 'Selesai',
         badge: 'bg-[#EAF6EF] text-[#287A4B]',
         bar: 'bg-[#3A8C5E]',
     },
+
     archived: {
         label: 'Diarsipkan',
         badge: 'bg-[#EDF0F3] text-[#53616D]',
         bar: 'bg-[#667784]',
     },
+
     cancelled: {
         label: 'Dibatalkan',
         badge: 'bg-[#FCECEC] text-[#B64040]',
@@ -99,18 +110,21 @@ const kpiItems = [
         description: 'Seluruh berita acara',
         icon: ClipboardList,
     },
+
     {
         key: 'draft' as const,
         title: 'Draft',
-        description: 'Belum difinalisasi',
+        description: 'Belum pernah difinalisasi',
         icon: FileClock,
     },
+
     {
         key: 'completed' as const,
         title: 'Selesai',
         description: 'Proses serah terima selesai',
         icon: CheckCircle2,
     },
+
     {
         key: 'archived' as const,
         title: 'Arsip',
@@ -249,6 +263,7 @@ export default function Dashboard({
                                     <h2 className="text-[15px] font-semibold text-[#25313C]">
                                         Aktivitas BAST
                                     </h2>
+
                                     <p className="mt-1 text-xs text-[#87949F]">
                                         Dokumen yang dibuat dalam 6 bulan
                                         terakhir.
@@ -306,12 +321,13 @@ export default function Dashboard({
                                 <h2 className="text-[15px] font-semibold text-[#25313C]">
                                     Status Dokumen
                                 </h2>
+
                                 <p className="mt-1 text-xs text-[#87949F]">
                                     Distribusi status BAST saat ini.
                                 </p>
                             </div>
 
-                            <div className="mt-6 space-y-5">
+                            <div className="mt-6 space-y-4">
                                 {statusBreakdown.map((item) => {
                                     const style =
                                         statusStyles[item.key] ??
@@ -354,8 +370,9 @@ export default function Dashboard({
                                     <h2 className="text-[15px] font-semibold text-[#25313C]">
                                         Berita Acara Terbaru
                                     </h2>
+
                                     <p className="mt-1 text-xs text-[#87949F]">
-                                        Dokumen yang terakhir diperbarui.
+                                        Dokumen aktif yang terakhir diperbarui.
                                     </p>
                                 </div>
 
@@ -396,12 +413,15 @@ export default function Dashboard({
                                                 <th className="px-6 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
                                                     Dokumen
                                                 </th>
+
                                                 <th className="px-4 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
                                                     Jenis
                                                 </th>
+
                                                 <th className="px-4 py-3 text-left text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
                                                     Tanggal
                                                 </th>
+
                                                 <th className="px-6 py-3 text-right text-[11px] font-medium tracking-wide text-[#82909B] uppercase">
                                                     Status
                                                 </th>
@@ -424,7 +444,7 @@ export default function Dashboard({
                                                                 {bast.title}
                                                             </p>
 
-                                                            <p className="mt-1 text-[11px] text-[#8B97A1]">
+                                                            <p className="mt-1 font-mono text-[10px] text-[#8B97A1]">
                                                                 {bast.documentNumber ??
                                                                     'Belum bernomor'}
                                                             </p>

@@ -63,10 +63,21 @@ class BastController extends Controller
             ),
         );
 
-        $years = $this
+        /*
+         * Halaman Berita Acara hanya menampilkan dokumen kerja aktif.
+         * Dokumen Archived memiliki halaman khusus di /archive.
+         */
+        $baseQuery = $this
             ->visibleBasts(
                 $user,
             )
+            ->where(
+                'status',
+                '!=',
+                Bast::STATUS_ARCHIVED,
+            );
+
+        $years = (clone $baseQuery)
             ->whereNotNull(
                 'document_year',
             )
@@ -82,10 +93,7 @@ class BastController extends Controller
             )
             ->values();
 
-        $query = $this
-            ->visibleBasts(
-                $user,
-            )
+        $query = (clone $baseQuery)
             ->with([
                 'bastType:id,name',
 
@@ -142,18 +150,32 @@ class BastController extends Controller
             );
         }
 
-        $allowedStatuses = [
-            Bast::STATUS_DRAFT,
-            Bast::STATUS_FINALIZED,
-            Bast::STATUS_COMPLETED,
-            Bast::STATUS_ARCHIVED,
-            Bast::STATUS_CANCELLED,
-        ];
-
-        if (
+        if ($status === 'draft') {
+            $query
+                ->where(
+                    'status',
+                    Bast::STATUS_DRAFT,
+                )
+                ->whereNull(
+                    'sequence_number',
+                );
+        } elseif ($status === 'revision') {
+            $query
+                ->where(
+                    'status',
+                    Bast::STATUS_DRAFT,
+                )
+                ->whereNotNull(
+                    'sequence_number',
+                );
+        } elseif (
             in_array(
                 $status,
-                $allowedStatuses,
+                [
+                    Bast::STATUS_FINALIZED,
+                    Bast::STATUS_COMPLETED,
+                    Bast::STATUS_CANCELLED,
+                ],
                 true,
             )
         ) {
@@ -193,6 +215,79 @@ class BastController extends Controller
             )
             ->paginate(10)
             ->withQueryString();
+
+        $basts->through(
+            fn (Bast $bast): array => [
+                'uuid' => $bast->uuid,
+
+                'document_number' => $bast
+                    ->document_number,
+
+                'title' => $bast->title,
+
+                /*
+                 * Frontend tidak perlu mengetahui detail rule
+                 * sequence_number untuk menentukan Draft Revisi.
+                 */
+                'status' => $this->presentationStatus(
+                    $bast,
+                ),
+
+                'document_date' => $bast
+                    ->document_date
+                    ->toDateString(),
+
+                'updated_at' => $bast
+                    ->updated_at
+                    ?->toISOString(),
+
+                'items_count' => $bast
+                    ->items_count,
+
+                'attachments_count' => $bast
+                    ->attachments_count,
+
+                'bast_type' => $bast->bastType === null
+                    ? null
+                    : [
+                        'id' => $bast
+                            ->bastType
+                            ->id,
+
+                        'name' => $bast
+                            ->bastType
+                            ->name,
+                    ],
+
+                'department' => $bast->department === null
+                    ? null
+                    : [
+                        'id' => $bast
+                            ->department
+                            ->id,
+
+                        'name' => $bast
+                            ->department
+                            ->name,
+
+                        'code' => $bast
+                            ->department
+                            ->code,
+                    ],
+
+                'creator' => $bast->creator === null
+                    ? null
+                    : [
+                        'id' => $bast
+                            ->creator
+                            ->id,
+
+                        'name' => $bast
+                            ->creator
+                            ->name,
+                    ],
+            ],
+        );
 
         return Inertia::render(
             'bast/index',
@@ -619,5 +714,18 @@ class BastController extends Controller
         }
 
         return $query;
+    }
+
+    private function presentationStatus(
+        Bast $bast,
+    ): string {
+        if (
+            $bast->isDraft()
+            && $bast->sequence_number !== null
+        ) {
+            return 'revision';
+        }
+
+        return $bast->status;
     }
 }
