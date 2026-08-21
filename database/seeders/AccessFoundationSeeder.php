@@ -26,7 +26,7 @@ class AccessFoundationSeeder extends Seeder
             ['slug' => 'admin'],
             [
                 'name' => 'Admin',
-                'description' => 'Mengelola operasional berita acara, arsip, pengguna, dan data master.',
+                'description' => 'Mengelola operasional berita acara, arsip, data master, dan log aktivitas.',
                 'is_active' => true,
             ],
         );
@@ -54,13 +54,13 @@ class AccessFoundationSeeder extends Seeder
 
         if (! is_string($email) || $email === '') {
             throw new RuntimeException(
-                'BAST super admin email configuration is invalid.',
+                'BAST_SUPER_ADMIN_EMAIL must be configured before seeding.',
             );
         }
 
         if (! is_string($password) || $password === '') {
             throw new RuntimeException(
-                'BAST super admin password configuration is invalid.',
+                'BAST_SUPER_ADMIN_PASSWORD must be configured before seeding.',
             );
         }
 
