@@ -23,8 +23,6 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
 
     export DB_CONNECTION
     export DB_DATABASE
-
-    touch "${DB_DATABASE}"
 fi
 
 chown -R www-data:www-data \
@@ -37,10 +35,25 @@ php artisan config:clear
 if [ "${BAST_DEMO_RESET:-false}" = "true" ]; then
     echo "Preparing fresh BAST portfolio demo database..."
 
-    php artisan migrate:fresh \
+    if [ "${DB_CONNECTION:-sqlite}" != "sqlite" ]; then
+        echo "BAST_DEMO_RESET is only supported with SQLite."
+        exit 1
+    fi
+
+    rm -f "${DB_DATABASE}"
+    touch "${DB_DATABASE}"
+
+    chown www-data:www-data "${DB_DATABASE}"
+
+    php artisan migrate \
         --seed \
         --force
 else
+    if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
+        touch "${DB_DATABASE}"
+        chown www-data:www-data "${DB_DATABASE}"
+    fi
+
     echo "Running database migrations..."
 
     php artisan migrate \
