@@ -15,6 +15,22 @@ type Props = {
     canResetPassword: boolean;
 };
 
+function normalizeLoginError(message?: string): string | undefined {
+    if (!message) {
+        return undefined;
+    }
+
+    if (message === 'auth.failed' || message === 'auth:failed') {
+        return 'Email atau kata sandi tidak sesuai.';
+    }
+
+    if (message === 'auth.password' || message === 'auth:password') {
+        return 'Kata sandi tidak sesuai.';
+    }
+
+    return message;
+}
+
 export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
@@ -53,7 +69,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                 className="h-11 border-[#D7DEE4] bg-white shadow-none placeholder:text-[#A4AFB8] focus-visible:border-[#1D5D8F] focus-visible:ring-[#1D5D8F]/15"
                             />
 
-                            <InputError message={errors.email} />
+                            <InputError
+                                message={normalizeLoginError(errors.email)}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -86,7 +104,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                 className="h-11 border-[#D7DEE4] bg-white shadow-none placeholder:text-[#A4AFB8] focus-visible:border-[#1D5D8F] focus-visible:ring-[#1D5D8F]/15"
                             />
 
-                            <InputError message={errors.password} />
+                            <InputError
+                                message={normalizeLoginError(errors.password)}
+                            />
                         </div>
 
                         <div className="flex items-center gap-2.5">
