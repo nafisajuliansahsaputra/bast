@@ -12,9 +12,14 @@ class BastPolicy
         return $user->isActive();
     }
 
-    public function view(User $user, Bast $bast): bool
-    {
-        if ($user->isSuperAdmin() || $user->isAdmin()) {
+    public function view(
+        User $user,
+        Bast $bast,
+    ): bool {
+        if (
+            $user->isSuperAdmin()
+            || $user->isAdmin()
+        ) {
             return true;
         }
 
@@ -32,21 +37,38 @@ class BastPolicy
             );
     }
 
-    public function update(User $user, Bast $bast): bool
-    {
+    public function update(
+        User $user,
+        Bast $bast,
+    ): bool {
         return $bast->isDraft()
-            && $this->canManage($user, $bast);
+            && $this->canManage(
+                $user,
+                $bast,
+            );
     }
 
-    public function delete(User $user, Bast $bast): bool
-    {
-        return $this->update($user, $bast);
+    public function delete(
+        User $user,
+        Bast $bast,
+    ): bool {
+        return $bast->isDraft()
+            && $bast->sequence_number === null
+            && $this->canManage(
+                $user,
+                $bast,
+            );
     }
 
-    public function finalize(User $user, Bast $bast): bool
-    {
+    public function finalize(
+        User $user,
+        Bast $bast,
+    ): bool {
         return $bast->isDraft()
-            && $this->canManage($user, $bast);
+            && $this->canManage(
+                $user,
+                $bast,
+            );
     }
 
     public function manageAttachments(
@@ -54,7 +76,32 @@ class BastPolicy
         Bast $bast,
     ): bool {
         return $bast->isDraft()
-            && $this->canManage($user, $bast);
+            && $this->canManage(
+                $user,
+                $bast,
+            );
+    }
+
+    public function reopen(
+        User $user,
+        Bast $bast,
+    ): bool {
+        return $bast->isFinalized()
+            && (
+                $user->isSuperAdmin()
+                || $user->isAdmin()
+            );
+    }
+
+    public function cancel(
+        User $user,
+        Bast $bast,
+    ): bool {
+        return $bast->isFinalized()
+            && (
+                $user->isSuperAdmin()
+                || $user->isAdmin()
+            );
     }
 
     public function complete(
@@ -62,7 +109,10 @@ class BastPolicy
         Bast $bast,
     ): bool {
         return $bast->isFinalized()
-            && $this->canManage($user, $bast);
+            && $this->canManage(
+                $user,
+                $bast,
+            );
     }
 
     public function archive(
@@ -70,7 +120,10 @@ class BastPolicy
         Bast $bast,
     ): bool {
         return $bast->isCompleted()
-            && $this->canManage($user, $bast);
+            && $this->canManage(
+                $user,
+                $bast,
+            );
     }
 
     public function restoreArchive(
@@ -108,6 +161,7 @@ class BastPolicy
                 Bast::STATUS_FINALIZED,
                 Bast::STATUS_COMPLETED,
                 Bast::STATUS_ARCHIVED,
+                Bast::STATUS_CANCELLED,
             ],
             true,
         );

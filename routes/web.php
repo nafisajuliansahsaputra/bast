@@ -39,6 +39,22 @@ Route::middleware([
     )->name('bast.finalize');
 
     Route::post(
+        'bast/{bast}/reopen',
+        [
+            BastLifecycleController::class,
+            'reopen',
+        ],
+    )->name('bast.reopen');
+
+    Route::post(
+        'bast/{bast}/cancel',
+        [
+            BastLifecycleController::class,
+            'cancel',
+        ],
+    )->name('bast.cancel');
+
+    Route::post(
         'bast/{bast}/complete',
         [
             BastLifecycleController::class,

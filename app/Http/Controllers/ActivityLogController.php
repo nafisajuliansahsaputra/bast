@@ -367,6 +367,8 @@ class ActivityLogController extends Controller
             'BAST_COMPLETED' => 'BAST ditandai selesai',
             'BAST_ARCHIVED' => 'BAST diarsipkan',
             'BAST_RESTORED' => 'BAST dipulihkan',
+            'BAST_REOPENED' => 'BAST dibuka kembali',
+            'BAST_CANCELLED' => 'BAST dibatalkan',
 
             'ATTACHMENT_UPLOADED' => 'Lampiran diunggah',
             'ATTACHMENT_DELETED' => 'Lampiran dihapus',

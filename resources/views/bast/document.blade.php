@@ -123,6 +123,33 @@
             font-size: 11px;
         }
 
+        .status-banner {
+            margin-top: 16px;
+            padding: 10px 12px;
+            border: 1px solid;
+            border-radius: 5px;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .status-banner strong {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 11px;
+        }
+
+        .status-banner.draft {
+            border-color: #d6dde3;
+            color: #53616d;
+            background: #f5f7f9;
+        }
+
+        .status-banner.cancelled {
+            border-color: #e2b8b8;
+            color: #8f3434;
+            background: #fff3f3;
+        }
+
         .intro {
             margin-top: 24px;
             text-align: justify;
@@ -291,6 +318,10 @@
         ->locale('id')
         ->translatedFormat('d F Y');
 
+    $cancelledDate = $bast->cancelled_at
+        ?->locale('id')
+        ->translatedFormat('d F Y H:i');
+
     $formatQuantity = static function ($quantity): string {
         return rtrim(
             rtrim(
@@ -359,6 +390,43 @@
                 {{ $bast->document_number ?? 'Belum bernomor' }}
             </div>
         </section>
+
+        @if ($bast->isDraft())
+            <section class="status-banner draft">
+                <strong>DRAFT — BELUM FINAL</strong>
+
+                @if ($bast->sequence_number)
+                    Dokumen ini sedang dibuka kembali untuk proses revisi.
+                    Nomor resmi dipertahankan, tetapi isi dokumen belum dianggap
+                    final sampai proses finalisasi ulang selesai.
+                @else
+                    Dokumen ini masih berupa draft dan belum menjadi dokumen
+                    BAST final.
+                @endif
+            </section>
+        @endif
+
+        @if ($bast->isCancelled())
+            <section class="status-banner cancelled">
+                <strong>DOKUMEN DIBATALKAN</strong>
+
+                Dokumen ini telah dibatalkan
+                @if ($cancelledDate)
+                    pada {{ $cancelledDate }}
+                @endif
+
+                @if ($bast->cancelledBy)
+                    oleh {{ $bast->cancelledBy->name }}
+                @endif
+                .
+
+                @if ($bast->cancellation_reason)
+                    <br>
+                    Alasan:
+                    {{ $bast->cancellation_reason }}
+                @endif
+            </section>
+        @endif
 
         <section class="intro">
             Pada tanggal

@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     Archive as ArchiveIcon,
     ArrowLeft,
+    Ban,
     CheckCircle2,
     Download,
     Eye,
@@ -11,6 +12,7 @@ import {
     PencilLine,
     RotateCcw,
     Trash2,
+    Undo2,
     UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -20,7 +22,9 @@ import {
 } from '@/actions/App/Http/Controllers/BastDocumentController';
 import {
     archive as archiveBast,
+    cancel as cancelBast,
     complete as completeBast,
+    reopen as reopenBast,
     restore as restoreBast,
 } from '@/actions/App/Http/Controllers/BastLifecycleController';
 import { BastAttachmentPanel } from '@/components/bast/bast-attachment-panel';
@@ -72,6 +76,7 @@ type Item = {
 type BastDetail = {
     uuid: string;
     document_number: string | null;
+    sequence_number: number | null;
     title: string;
     description: string | null;
     document_date: string;
@@ -80,6 +85,8 @@ type BastDetail = {
     status: string;
     created_at: string;
     finalized_at: string | null;
+    cancelled_at: string | null;
+    cancellation_reason: string | null;
 
     bast_type: {
         id: number;
@@ -103,6 +110,11 @@ type BastDetail = {
         name: string;
     } | null;
 
+    cancelled_by: {
+        id: number;
+        name: string;
+    } | null;
+
     parties: Party[];
     items: Item[];
     attachments: BastAttachmentItem[];
@@ -113,6 +125,8 @@ type Permissions = {
     delete: boolean;
     finalize: boolean;
     manageAttachments: boolean;
+    reopen: boolean;
+    cancel: boolean;
     complete: boolean;
     archive: boolean;
     restoreArchive: boolean;
@@ -120,7 +134,7 @@ type Permissions = {
     downloadPdf: boolean;
 };
 
-type LifecycleAction = 'complete' | 'archive' | 'restore';
+type LifecycleAction = 'complete' | 'archive' | 'restore' | 'reopen';
 
 const statusStyles: Record<
     string,
@@ -195,6 +209,16 @@ const lifecycleDialogContent: Record<
         processingLabel: 'Memulihkan...',
         confirmClassName: 'bg-[#1D5D8F] text-white hover:bg-[#174C76]',
     },
+
+    reopen: {
+        title: 'Buka kembali BAST?',
+        description:
+            'Status dokumen akan dikembalikan dari Finalized menjadi Draft agar dapat direvisi.',
+        note: 'Nomor dokumen dan nomor urut yang sudah diterbitkan tetap dipertahankan. Dokumen harus difinalisasi ulang setelah revisi selesai.',
+        confirmLabel: 'Ya, Buka Kembali',
+        processingLabel: 'Membuka kembali...',
+        confirmClassName: 'bg-[#A06B16] text-white hover:bg-[#875A12]',
+    },
 };
 
 function formatDate(value: string): string {
@@ -210,6 +234,22 @@ function formatDate(value: string): string {
         day: '2-digit',
         month: 'long',
         year: 'numeric',
+    }).format(date);
+}
+
+function formatDateTime(value: string): string {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return '—';
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
     }).format(date);
 }
 
@@ -234,12 +274,25 @@ export default function BastShow({
 
     const [deleteOpen, setDeleteOpen] = useState(false);
 
+    const [cancelOpen, setCancelOpen] = useState(false);
+
+    const [cancellationReason, setCancellationReason] = useState('');
+
+    const [cancellationError, setCancellationError] = useState<string | null>(
+        null,
+    );
+
     const [lifecycleAction, setLifecycleAction] =
         useState<LifecycleAction | null>(null);
 
     const [processingAction, setProcessingAction] = useState(false);
 
     const status = statusStyles[bast.status] ?? statusStyles.draft;
+
+    const isRevisionDraft =
+        bast.status === 'draft' && bast.sequence_number !== null;
+
+    const displayStatusLabel = isRevisionDraft ? 'Draft Revisi' : status.label;
 
     const firstParty = bast.parties.find(
         (party) => party.party_type === 'first_party',
@@ -295,7 +348,9 @@ export default function BastShow({
                 ? completeBast.url(bast.uuid)
                 : lifecycleAction === 'archive'
                   ? archiveBast.url(bast.uuid)
-                  : restoreBast.url(bast.uuid);
+                  : lifecycleAction === 'restore'
+                    ? restoreBast.url(bast.uuid)
+                    : reopenBast.url(bast.uuid);
 
         router.post(
             url,
@@ -314,10 +369,55 @@ export default function BastShow({
         );
     };
 
+    const cancelCurrentBast = () => {
+        const reason = cancellationReason.trim();
+
+        if (reason.length < 10) {
+            setCancellationError('Alasan pembatalan minimal 10 karakter.');
+
+            return;
+        }
+
+        setCancellationError(null);
+        setProcessingAction(true);
+
+        router.post(
+            cancelBast.url(bast.uuid),
+            {
+                cancellation_reason: reason,
+            },
+            {
+                preserveScroll: true,
+
+                onSuccess: () => {
+                    setCancelOpen(false);
+                    setCancellationReason('');
+                    setCancellationError(null);
+                },
+
+                onError: (errors) => {
+                    const error = errors.cancellation_reason;
+
+                    setCancellationError(
+                        typeof error === 'string'
+                            ? error
+                            : 'Pembatalan BAST gagal diproses.',
+                    );
+                },
+
+                onFinish: () => {
+                    setProcessingAction(false);
+                },
+            },
+        );
+    };
+
     const hasActions =
         permissions.update ||
         permissions.finalize ||
         permissions.delete ||
+        permissions.reopen ||
+        permissions.cancel ||
         permissions.complete ||
         permissions.archive ||
         permissions.restoreArchive ||
@@ -348,7 +448,7 @@ export default function BastShow({
                                 <span
                                     className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${status.className}`}
                                 >
-                                    {status.label}
+                                    {displayStatusLabel}
                                 </span>
 
                                 <span className="font-mono text-xs text-[#87949F]">
@@ -430,6 +530,35 @@ export default function BastShow({
                                     </Button>
                                 )}
 
+                                {permissions.reopen && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                            setLifecycleAction('reopen')
+                                        }
+                                        className="h-10 border-[#E8D4AF] bg-white px-4 text-[#9A6718] shadow-none hover:bg-[#FFF9EF] hover:text-[#825613]"
+                                    >
+                                        <Undo2 className="size-4" />
+                                        Buka Kembali
+                                    </Button>
+                                )}
+
+                                {permissions.cancel && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setCancellationError(null);
+                                            setCancelOpen(true);
+                                        }}
+                                        className="h-10 border-[#E3CACA] bg-white px-4 text-[#B44949] shadow-none hover:bg-[#FFF6F6] hover:text-[#A53E3E]"
+                                    >
+                                        <Ban className="size-4" />
+                                        Batalkan
+                                    </Button>
+                                )}
+
                                 {permissions.archive && (
                                     <Button
                                         type="button"
@@ -464,7 +593,9 @@ export default function BastShow({
                                         className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
                                     >
                                         <FileCheck2 className="size-4" />
-                                        Finalisasi BAST
+                                        {isRevisionDraft
+                                            ? 'Finalisasi Ulang'
+                                            : 'Finalisasi BAST'}
                                     </Button>
                                 )}
 
@@ -482,6 +613,38 @@ export default function BastShow({
                             </div>
                         )}
                     </div>
+
+                    {bast.status === 'cancelled' && (
+                        <div className="mt-6 rounded-[10px] border border-[#E6C5C5] bg-[#FFF5F5] p-5">
+                            <div className="flex items-start gap-3">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#FCE5E5] text-[#B64040]">
+                                    <Ban className="size-4" />
+                                </div>
+
+                                <div>
+                                    <h2 className="text-sm font-semibold text-[#8F3838]">
+                                        Dokumen Dibatalkan
+                                    </h2>
+
+                                    <p className="mt-1 text-xs leading-5 text-[#8B5B5B]">
+                                        {bast.cancellation_reason ??
+                                            'Tidak ada alasan pembatalan.'}
+                                    </p>
+
+                                    <p className="mt-2 text-[11px] text-[#9A7070]">
+                                        {bast.cancelled_by?.name ??
+                                            'Administrator'}
+
+                                        {bast.cancelled_at
+                                            ? ` · ${formatDateTime(
+                                                  bast.cancelled_at,
+                                              )}`
+                                            : ''}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="mt-7 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
                         <div className="space-y-4">
@@ -620,7 +783,7 @@ export default function BastShow({
                                 <div className="mt-4 space-y-4">
                                     <DetailRow
                                         label="Status"
-                                        value={status.label}
+                                        value={displayStatusLabel}
                                     />
 
                                     <DetailRow
@@ -657,19 +820,23 @@ export default function BastShow({
                 <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
-                            Finalisasi BAST?
+                            {isRevisionDraft
+                                ? 'Finalisasi ulang BAST?'
+                                : 'Finalisasi BAST?'}
                         </DialogTitle>
 
                         <DialogDescription className="leading-6 text-[#71808C]">
-                            Setelah difinalisasi, nomor dokumen akan dibuat dan
-                            isi BAST dikunci.
+                            {isRevisionDraft
+                                ? 'Dokumen revisi akan dikunci kembali sebagai dokumen final.'
+                                : 'Setelah difinalisasi, nomor dokumen akan dibuat dan isi BAST dikunci.'}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="rounded-lg border border-[#DCE8F0] bg-[#F5F9FC] px-4 py-3">
                         <p className="text-xs leading-5 text-[#526675]">
-                            Pastikan informasi dokumen, pihak, item, dan
-                            lampiran sudah benar.
+                            {isRevisionDraft
+                                ? 'Nomor urut yang sudah diterbitkan akan digunakan kembali. Sistem tidak akan mengambil sequence baru.'
+                                : 'Pastikan informasi dokumen, pihak, item, dan lampiran sudah benar.'}
                         </p>
                     </div>
 
@@ -692,7 +859,9 @@ export default function BastShow({
                         >
                             {processingAction
                                 ? 'Memfinalisasi...'
-                                : 'Ya, Finalisasi'}
+                                : isRevisionDraft
+                                  ? 'Ya, Finalisasi Ulang'
+                                  : 'Ya, Finalisasi'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -729,6 +898,116 @@ export default function BastShow({
                             className="bg-[#B44949] text-white hover:bg-[#9E3D3D]"
                         >
                             {processingAction ? 'Menghapus...' : 'Hapus Draft'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={cancelOpen}
+                onOpenChange={(open) => {
+                    if (processingAction) {
+                        return;
+                    }
+
+                    setCancelOpen(open);
+
+                    if (!open) {
+                        setCancellationReason('');
+                        setCancellationError(null);
+                    }
+                }}
+            >
+                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[520px]">
+                    <DialogHeader>
+                        <DialogTitle className="text-[#17212B]">
+                            Batalkan BAST?
+                        </DialogTitle>
+
+                        <DialogDescription className="leading-6 text-[#71808C]">
+                            Status dokumen akan menjadi Dibatalkan dan tidak
+                            dapat melanjutkan workflow.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-lg border border-[#F0D5D5] bg-[#FFF7F7] px-4 py-3">
+                        <p className="text-xs leading-5 text-[#805454]">
+                            Nomor dokumen dan histori tetap disimpan untuk
+                            kebutuhan audit. Dokumen yang dibatalkan tidak
+                            dihapus dari sistem.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <label
+                            htmlFor="cancellation_reason"
+                            className="text-sm font-medium text-[#46545F]"
+                        >
+                            Alasan Pembatalan
+                        </label>
+
+                        <textarea
+                            id="cancellation_reason"
+                            value={cancellationReason}
+                            onChange={(event) => {
+                                setCancellationReason(event.target.value);
+
+                                if (cancellationError) {
+                                    setCancellationError(null);
+                                }
+                            }}
+                            rows={5}
+                            maxLength={2000}
+                            placeholder="Jelaskan alasan BAST harus dibatalkan..."
+                            className="w-full resize-none rounded-lg border border-[#D7DEE4] bg-white px-3 py-2.5 text-sm text-[#344250] transition outline-none focus:border-[#1D5D8F] focus:ring-2 focus:ring-[#1D5D8F]/10"
+                        />
+
+                        <div className="flex justify-between gap-4">
+                            <p className="text-[11px] text-[#929DA6]">
+                                Minimal 10 karakter
+                            </p>
+
+                            <p className="text-[11px] text-[#929DA6]">
+                                {cancellationReason.length}/2000
+                            </p>
+                        </div>
+
+                        {cancellationError && (
+                            <p className="text-xs text-[#B44949]">
+                                {cancellationError}
+                            </p>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={processingAction}
+                            onClick={() => {
+                                setCancelOpen(false);
+                                setCancellationReason('');
+                                setCancellationError(null);
+                            }}
+                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                        >
+                            Kembali
+                        </Button>
+
+                        <Button
+                            type="button"
+                            disabled={
+                                processingAction ||
+                                cancellationReason.trim().length < 10
+                            }
+                            onClick={cancelCurrentBast}
+                            className="bg-[#B44949] text-white hover:bg-[#9E3D3D]"
+                        >
+                            <Ban className="size-4" />
+
+                            {processingAction
+                                ? 'Membatalkan...'
+                                : 'Ya, Batalkan BAST'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

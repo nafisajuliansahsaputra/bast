@@ -28,6 +28,7 @@ class BastDocumentController extends Controller
             'bast.document',
             [
                 'bast' => $bast,
+
                 'isPdf' => false,
             ],
         );
@@ -90,6 +91,7 @@ class BastDocumentController extends Controller
             'bast.document',
             [
                 'bast' => $bast,
+
                 'isPdf' => true,
             ],
         )
@@ -118,15 +120,22 @@ class BastDocumentController extends Controller
 
             'archivedBy:id,name',
 
+            'cancelledBy:id,name',
+
             'parties' => fn ($query) => $query
-                ->orderBy('sort_order'),
+                ->orderBy(
+                    'sort_order',
+                ),
 
             'items' => fn ($query) => $query
                 ->with([
                     'itemCategory:id,name',
+
                     'unit:id,name,symbol',
                 ])
-                ->orderBy('sort_order'),
+                ->orderBy(
+                    'sort_order',
+                ),
 
             'attachments:id,bast_id,original_name,category',
         ]);

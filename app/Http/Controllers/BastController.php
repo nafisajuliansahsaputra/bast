@@ -20,31 +20,77 @@ use Inertia\Response;
 
 class BastController extends Controller
 {
-    public function index(Request $request): Response
-    {
-        Gate::authorize('viewAny', Bast::class);
+    public function index(
+        Request $request,
+    ): Response {
+        Gate::authorize(
+            'viewAny',
+            Bast::class,
+        );
 
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
-        $search = trim((string) $request->query('search', ''));
-        $status = trim((string) $request->query('status', ''));
-        $type = trim((string) $request->query('type', ''));
-        $year = trim((string) $request->query('year', ''));
+        $search = trim(
+            (string) $request->query(
+                'search',
+                '',
+            ),
+        );
 
-        $years = $this->visibleBasts($user)
-            ->whereNotNull('document_year')
-            ->select('document_year')
+        $status = trim(
+            (string) $request->query(
+                'status',
+                '',
+            ),
+        );
+
+        $type = trim(
+            (string) $request->query(
+                'type',
+                '',
+            ),
+        );
+
+        $year = trim(
+            (string) $request->query(
+                'year',
+                '',
+            ),
+        );
+
+        $years = $this
+            ->visibleBasts(
+                $user,
+            )
+            ->whereNotNull(
+                'document_year',
+            )
+            ->select(
+                'document_year',
+            )
             ->distinct()
-            ->orderByDesc('document_year')
-            ->pluck('document_year')
+            ->orderByDesc(
+                'document_year',
+            )
+            ->pluck(
+                'document_year',
+            )
             ->values();
 
-        $query = $this->visibleBasts($user)
+        $query = $this
+            ->visibleBasts(
+                $user,
+            )
             ->with([
                 'bastType:id,name',
+
                 'department:id,name,code',
+
                 'creator:id,name',
             ])
             ->withCount([
@@ -104,18 +150,37 @@ class BastController extends Controller
             Bast::STATUS_CANCELLED,
         ];
 
-        if (in_array($status, $allowedStatuses, true)) {
-            $query->where('status', $status);
+        if (
+            in_array(
+                $status,
+                $allowedStatuses,
+                true,
+            )
+        ) {
+            $query->where(
+                'status',
+                $status,
+            );
         }
 
-        if ($type !== '' && ctype_digit($type)) {
+        if (
+            $type !== ''
+            && ctype_digit(
+                $type,
+            )
+        ) {
             $query->where(
                 'bast_type_id',
                 (int) $type,
             );
         }
 
-        if ($year !== '' && ctype_digit($year)) {
+        if (
+            $year !== ''
+            && ctype_digit(
+                $year,
+            )
+        ) {
             $query->where(
                 'document_year',
                 (int) $year,
@@ -123,7 +188,9 @@ class BastController extends Controller
         }
 
         $basts = $query
-            ->latest('updated_at')
+            ->latest(
+                'updated_at',
+            )
             ->paginate(10)
             ->withQueryString();
 
@@ -140,8 +207,13 @@ class BastController extends Controller
                 ],
 
                 'bastTypes' => BastType::query()
-                    ->where('is_active', true)
-                    ->orderBy('name')
+                    ->where(
+                        'is_active',
+                        true,
+                    )
+                    ->orderBy(
+                        'name',
+                    )
                     ->get([
                         'id',
                         'name',
@@ -162,11 +234,16 @@ class BastController extends Controller
 
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         return Inertia::render(
             'bast/create',
-            $this->formOptions($user),
+            $this->formOptions(
+                $user,
+            ),
         );
     }
 
@@ -176,7 +253,10 @@ class BastController extends Controller
     ): RedirectResponse {
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         $bast = $bastService->createDraft(
             $user,
@@ -207,25 +287,41 @@ class BastController extends Controller
 
         $bast->load([
             'bastType:id,name',
+
             'department:id,name,code',
+
             'creator:id,name,email',
+
             'finalizedBy:id,name',
+
             'completedBy:id,name',
+
             'archivedBy:id,name',
 
+            'cancelledBy:id,name',
+
             'parties' => fn ($query) => $query
-                ->orderBy('sort_order'),
+                ->orderBy(
+                    'sort_order',
+                ),
 
             'items' => fn ($query) => $query
                 ->with([
                     'itemCategory:id,name',
+
                     'unit:id,name,symbol',
                 ])
-                ->orderBy('sort_order'),
+                ->orderBy(
+                    'sort_order',
+                ),
 
             'attachments' => fn ($query) => $query
-                ->with('uploader:id,name')
-                ->latest('created_at'),
+                ->with(
+                    'uploader:id,name',
+                )
+                ->latest(
+                    'created_at',
+                ),
         ]);
 
         return Inertia::render(
@@ -251,6 +347,16 @@ class BastController extends Controller
 
                     'manageAttachments' => Gate::allows(
                         'manageAttachments',
+                        $bast,
+                    ),
+
+                    'reopen' => Gate::allows(
+                        'reopen',
+                        $bast,
+                    ),
+
+                    'cancel' => Gate::allows(
+                        'cancel',
                         $bast,
                     ),
 
@@ -294,21 +400,31 @@ class BastController extends Controller
 
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         $bast->load([
             'parties' => fn ($query) => $query
-                ->orderBy('sort_order'),
+                ->orderBy(
+                    'sort_order',
+                ),
 
             'items' => fn ($query) => $query
-                ->orderBy('sort_order'),
+                ->orderBy(
+                    'sort_order',
+                ),
         ]);
 
         return Inertia::render(
             'bast/edit',
             [
                 'bast' => $bast,
-                ...$this->formOptions($user),
+
+                ...$this->formOptions(
+                    $user,
+                ),
             ],
         );
     }
@@ -320,7 +436,10 @@ class BastController extends Controller
     ): RedirectResponse {
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         $bast = $bastService->updateDraft(
             $user,
@@ -353,7 +472,10 @@ class BastController extends Controller
 
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         $bast = $bastService->finalize(
             $user,
@@ -385,7 +507,10 @@ class BastController extends Controller
 
         $user = $request->user();
 
-        abort_unless($user instanceof User, 403);
+        abort_unless(
+            $user instanceof User,
+            403,
+        );
 
         $bastService->deleteDraft(
             $user,
@@ -395,7 +520,9 @@ class BastController extends Controller
         );
 
         return redirect()
-            ->route('bast.index')
+            ->route(
+                'bast.index',
+            )
             ->with(
                 'success',
                 'Draft BAST berhasil dihapus.',
@@ -413,7 +540,9 @@ class BastController extends Controller
                 'is_active',
                 true,
             )
-            ->orderBy('name');
+            ->orderBy(
+                'name',
+            );
 
         if ($user->isStaff()) {
             $departments->whereKey(
@@ -423,8 +552,13 @@ class BastController extends Controller
 
         return [
             'bastTypes' => BastType::query()
-                ->where('is_active', true)
-                ->orderBy('name')
+                ->where(
+                    'is_active',
+                    true,
+                )
+                ->orderBy(
+                    'name',
+                )
                 ->get([
                     'id',
                     'name',
@@ -438,16 +572,26 @@ class BastController extends Controller
                 ]),
 
             'itemCategories' => ItemCategory::query()
-                ->where('is_active', true)
-                ->orderBy('name')
+                ->where(
+                    'is_active',
+                    true,
+                )
+                ->orderBy(
+                    'name',
+                )
                 ->get([
                     'id',
                     'name',
                 ]),
 
             'units' => Unit::query()
-                ->where('is_active', true)
-                ->orderBy('name')
+                ->where(
+                    'is_active',
+                    true,
+                )
+                ->orderBy(
+                    'name',
+                )
                 ->get([
                     'id',
                     'name',
