@@ -65,4 +65,22 @@ chown -R www-data:www-data \
     storage \
     bootstrap/cache
 
+echo "Configuring Apache MPM..."
+
+a2dismod mpm_event mpm_worker >/dev/null 2>&1 || true
+
+rm -f \
+    /etc/apache2/mods-enabled/mpm_event.load \
+    /etc/apache2/mods-enabled/mpm_event.conf \
+    /etc/apache2/mods-enabled/mpm_worker.load \
+    /etc/apache2/mods-enabled/mpm_worker.conf
+
+a2enmod mpm_prefork >/dev/null 2>&1 || true
+
+echo "Validating Apache configuration..."
+
+apache2ctl -t
+
+echo "Starting Apache on port ${PORT}..."
+
 exec apache2-foreground
