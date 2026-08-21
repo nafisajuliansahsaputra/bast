@@ -155,9 +155,21 @@ class ActivityLogController extends Controller
             ),
 
             'users' => $query->where(
-                'action',
-                'like',
-                'USER_%',
+                function (Builder $builder): void {
+                    $builder
+                        ->where(
+                            'action',
+                            'like',
+                            'USER_%',
+                        )
+                        ->orWhereIn(
+                            'action',
+                            [
+                                'PROFILE_UPDATED',
+                                'PASSWORD_UPDATED',
+                            ],
+                        );
+                },
             ),
 
             'master' => $query->where(
@@ -321,7 +333,17 @@ class ActivityLogController extends Controller
             ];
         }
 
-        if (str_starts_with($action, 'USER_')) {
+        if (
+            str_starts_with($action, 'USER_')
+            || in_array(
+                $action,
+                [
+                    'PROFILE_UPDATED',
+                    'PASSWORD_UPDATED',
+                ],
+                true,
+            )
+        ) {
             return [
                 'key' => 'users',
                 'label' => 'Pengguna',
@@ -355,7 +377,7 @@ class ActivityLogController extends Controller
             'USER_UPDATED' => 'Pengguna diperbarui',
             'USER_ACTIVATED' => 'Pengguna diaktifkan',
             'USER_DEACTIVATED' => 'Pengguna dinonaktifkan',
-            'USER_PASSWORD_RESET' => 'Password pengguna direset',
+            'USER_PASSWORD_RESET' => 'Kata sandi pengguna direset',
             'USER_LOGIN' => 'Pengguna masuk',
             'USER_LOGOUT' => 'Pengguna keluar',
 
@@ -374,6 +396,9 @@ class ActivityLogController extends Controller
             'MASTER_UNIT_CREATED' => 'Satuan ditambahkan',
             'MASTER_UNIT_UPDATED' => 'Satuan diperbarui',
             'MASTER_UNIT_STATUS_CHANGED' => 'Status Satuan diubah',
+
+            'PROFILE_UPDATED' => 'Profil diperbarui',
+            'PASSWORD_UPDATED' => 'Kata sandi diperbarui',
         ];
 
         return $labels[$action]
