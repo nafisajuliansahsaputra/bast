@@ -18,7 +18,6 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { Spinner } from '@/components/ui/spinner';
-import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { confirm } from '@/routes/two-factor';
@@ -28,21 +27,23 @@ function GridScanIcon() {
         <div className="mb-3 rounded-full border border-border bg-card p-0.5 shadow-sm">
             <div className="relative overflow-hidden rounded-full border border-border bg-muted p-2.5">
                 <div className="absolute inset-0 grid grid-cols-5 opacity-50">
-                    {Array.from({ length: 5 }, (_, i) => (
+                    {Array.from({ length: 5 }, (_, index) => (
                         <div
-                            key={`col-${i + 1}`}
+                            key={`col-${index + 1}`}
                             className="border-r border-border last:border-r-0"
                         />
                     ))}
                 </div>
+
                 <div className="absolute inset-0 grid grid-rows-5 opacity-50">
-                    {Array.from({ length: 5 }, (_, i) => (
+                    {Array.from({ length: 5 }, (_, index) => (
                         <div
-                            key={`row-${i + 1}`}
+                            key={`row-${index + 1}`}
                             className="border-b border-border last:border-b-0"
                         />
                     ))}
                 </div>
+
                 <ScanLine className="relative z-20 size-6 text-foreground" />
             </div>
         </div>
@@ -62,30 +63,23 @@ function TwoFactorSetupStep({
     onNextStep: () => void;
     errors: string[];
 }) {
-    const { resolvedAppearance } = useAppearance();
     const [copiedText, copy] = useClipboard();
     const IconComponent = copiedText === manualSetupKey ? Check : Copy;
 
     return (
         <>
-            {errors?.length ? (
+            {errors.length > 0 ? (
                 <AlertError errors={errors} />
             ) : (
                 <>
                     <div className="mx-auto flex max-w-md overflow-hidden">
-                        <div className="mx-auto aspect-square w-64 rounded-lg border border-border">
+                        <div className="mx-auto aspect-square w-64 rounded-lg border border-[#DDE3E8] bg-white">
                             <div className="z-10 flex h-full w-full items-center justify-center p-5">
                                 {qrCodeSvg ? (
                                     <div
                                         className="aspect-square w-full rounded-lg bg-white p-2 [&_svg]:size-full"
                                         dangerouslySetInnerHTML={{
                                             __html: qrCodeSvg,
-                                        }}
-                                        style={{
-                                            filter:
-                                                resolvedAppearance === 'dark'
-                                                    ? 'invert(1) brightness(1.5)'
-                                                    : undefined,
                                         }}
                                     />
                                 ) : (
@@ -95,23 +89,28 @@ function TwoFactorSetupStep({
                         </div>
                     </div>
 
-                    <div className="flex w-full space-x-5">
-                        <Button className="w-full" onClick={onNextStep}>
+                    <div className="flex w-full">
+                        <Button
+                            type="button"
+                            className="h-10 w-full bg-[#1D5D8F] text-white shadow-none hover:bg-[#174C76]"
+                            onClick={onNextStep}
+                        >
                             {buttonText}
                         </Button>
                     </div>
 
                     <div className="relative flex w-full items-center justify-center">
-                        <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
-                        <span className="relative bg-card px-2 py-1">
-                            or, enter the code manually
+                        <div className="absolute inset-0 top-1/2 h-px w-full bg-[#DDE3E8]" />
+
+                        <span className="relative bg-white px-2 py-1 text-xs text-[#71808C]">
+                            atau masukkan kode secara manual
                         </span>
                     </div>
 
-                    <div className="flex w-full space-x-2">
-                        <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-border">
+                    <div className="flex w-full">
+                        <div className="flex w-full items-stretch overflow-hidden rounded-lg border border-[#D7DEE4]">
                             {!manualSetupKey ? (
-                                <div className="flex h-full w-full items-center justify-center bg-muted p-3">
+                                <div className="flex h-11 w-full items-center justify-center bg-[#F5F7F9]">
                                     <Spinner />
                                 </div>
                             ) : (
@@ -120,13 +119,17 @@ function TwoFactorSetupStep({
                                         type="text"
                                         readOnly
                                         value={manualSetupKey}
-                                        className="h-full w-full bg-background p-3 text-foreground outline-none"
+                                        aria-label="Kunci pengaturan autentikasi dua faktor"
+                                        className="h-11 min-w-0 flex-1 bg-white px-3 font-mono text-sm text-[#344250] outline-none"
                                     />
+
                                     <button
+                                        type="button"
                                         onClick={() => copy(manualSetupKey)}
-                                        className="border-l border-border px-3 hover:bg-muted"
+                                        aria-label="Salin kunci pengaturan"
+                                        className="flex w-11 shrink-0 items-center justify-center border-l border-[#D7DEE4] text-[#657481] transition-colors hover:bg-[#F5F7F9] hover:text-[#1D5D8F]"
                                     >
-                                        <IconComponent className="w-4" />
+                                        <IconComponent className="size-4" />
                                     </button>
                                 </>
                             )}
@@ -145,19 +148,21 @@ function TwoFactorVerificationStep({
     onClose: () => void;
     onBack: () => void;
 }) {
-    const [code, setCode] = useState<string>('');
+    const [code, setCode] = useState('');
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setTimeout(() => {
+        const timeout = window.setTimeout(() => {
             pinInputContainerRef.current?.querySelector('input')?.focus();
         }, 0);
+
+        return () => window.clearTimeout(timeout);
     }, []);
 
     return (
         <Form
             {...confirm.form()}
-            onSuccess={() => onClose()}
+            onSuccess={onClose}
             resetOnError
             resetOnSuccess
         >
@@ -166,64 +171,70 @@ function TwoFactorVerificationStep({
                 errors,
             }: {
                 processing: boolean;
-                errors?: { confirmTwoFactorAuthentication?: { code?: string } };
+                errors?: {
+                    confirmTwoFactorAuthentication?: {
+                        code?: string;
+                    };
+                };
             }) => (
-                <>
-                    <div
-                        ref={pinInputContainerRef}
-                        className="relative w-full space-y-3"
-                    >
-                        <div className="flex w-full flex-col items-center space-y-3 py-2">
-                            <InputOTP
-                                id="otp"
-                                name="code"
-                                maxLength={OTP_MAX_LENGTH}
-                                onChange={setCode}
-                                disabled={processing}
-                                pattern={REGEXP_ONLY_DIGITS}
-                                autoFocus
-                            >
-                                <InputOTPGroup>
-                                    {Array.from(
-                                        { length: OTP_MAX_LENGTH },
-                                        (_, index) => (
-                                            <InputOTPSlot
-                                                key={index}
-                                                index={index}
-                                            />
-                                        ),
-                                    )}
-                                </InputOTPGroup>
-                            </InputOTP>
-                            <InputError
-                                message={
-                                    errors?.confirmTwoFactorAuthentication?.code
-                                }
-                            />
-                        </div>
+                <div
+                    ref={pinInputContainerRef}
+                    className="relative w-full space-y-5"
+                >
+                    <div className="flex w-full flex-col items-center space-y-3 py-2">
+                        <InputOTP
+                            id="otp"
+                            name="code"
+                            maxLength={OTP_MAX_LENGTH}
+                            value={code}
+                            onChange={setCode}
+                            disabled={processing}
+                            pattern={REGEXP_ONLY_DIGITS}
+                            autoFocus
+                        >
+                            <InputOTPGroup>
+                                {Array.from(
+                                    { length: OTP_MAX_LENGTH },
+                                    (_, index) => (
+                                        <InputOTPSlot
+                                            key={index}
+                                            index={index}
+                                            className="size-11 border-[#D7DEE4]"
+                                        />
+                                    ),
+                                )}
+                            </InputOTPGroup>
+                        </InputOTP>
 
-                        <div className="flex w-full space-x-5">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="flex-1"
-                                onClick={onBack}
-                                disabled={processing}
-                            >
-                                Back
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="flex-1"
-                                disabled={
-                                    processing || code.length < OTP_MAX_LENGTH
-                                }
-                            >
-                                Confirm
-                            </Button>
-                        </div>
+                        <InputError
+                            message={
+                                errors?.confirmTwoFactorAuthentication?.code
+                            }
+                        />
                     </div>
-                </>
+
+                    <div className="grid w-full grid-cols-2 gap-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-10 border-[#D7DEE4] text-[#344250]"
+                            onClick={onBack}
+                            disabled={processing}
+                        >
+                            Kembali
+                        </Button>
+
+                        <Button
+                            type="submit"
+                            className="h-10 bg-[#1D5D8F] text-white shadow-none hover:bg-[#174C76]"
+                            disabled={
+                                processing || code.length < OTP_MAX_LENGTH
+                            }
+                        >
+                            {processing ? 'Memverifikasi...' : 'Konfirmasi'}
+                        </Button>
+                    </div>
+                </div>
             )}
         </Form>
     );
@@ -252,8 +263,7 @@ export default function TwoFactorSetupModal({
     fetchSetupData,
     errors,
 }: Props) {
-    const [showVerificationStep, setShowVerificationStep] =
-        useState<boolean>(false);
+    const [showVerificationStep, setShowVerificationStep] = useState(false);
 
     const modalConfig = useMemo<{
         title: string;
@@ -262,29 +272,31 @@ export default function TwoFactorSetupModal({
     }>(() => {
         if (twoFactorEnabled) {
             return {
-                title: 'Two-factor authentication enabled',
+                title: 'Autentikasi Dua Faktor Aktif',
                 description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                    'Autentikasi dua faktor telah diaktifkan. Simpan kunci pengaturan atau pindai QR code menggunakan aplikasi authenticator Anda.',
+                buttonText: 'Tutup',
             };
         }
 
         if (showVerificationStep) {
             return {
-                title: 'Verify authentication code',
+                title: 'Verifikasi Kode Autentikasi',
                 description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                    'Masukkan kode 6 digit dari aplikasi authenticator Anda untuk menyelesaikan pengaturan.',
+                buttonText: 'Lanjutkan',
             };
         }
 
         return {
-            title: 'Enable two-factor authentication',
+            title: 'Aktifkan Autentikasi Dua Faktor',
             description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+                'Pindai QR code atau masukkan kunci pengaturan secara manual ke aplikasi authenticator Anda.',
+            buttonText: requiresConfirmation
+                ? 'Lanjutkan ke Verifikasi'
+                : 'Selesai',
         };
-    }, [twoFactorEnabled, showVerificationStep]);
+    }, [requiresConfirmation, showVerificationStep, twoFactorEnabled]);
 
     const resetModalState = useCallback(() => {
         if (twoFactorEnabled) {
@@ -308,7 +320,7 @@ export default function TwoFactorSetupModal({
 
         clearSetupData();
         handleClose();
-    }, [requiresConfirmation, clearSetupData, handleClose]);
+    }, [clearSetupData, handleClose, requiresConfirmation]);
 
     const fetchSetupDataRef = useRef(fetchSetupData);
 
@@ -318,16 +330,27 @@ export default function TwoFactorSetupModal({
 
     useEffect(() => {
         if (isOpen && !qrCodeSvg) {
-            fetchSetupDataRef.current();
+            void fetchSetupDataRef.current();
         }
     }, [isOpen, qrCodeSvg]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => {
+                if (!open) {
+                    handleClose();
+                }
+            }}
+        >
             <DialogContent className="sm:max-w-md">
                 <DialogHeader className="flex items-center justify-center">
                     <GridScanIcon />
-                    <DialogTitle>{modalConfig.title}</DialogTitle>
+
+                    <DialogTitle className="text-center">
+                        {modalConfig.title}
+                    </DialogTitle>
+
                     <DialogDescription className="text-center">
                         {modalConfig.description}
                     </DialogDescription>

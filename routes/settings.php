@@ -57,8 +57,4 @@ Route::middleware([
             'user-password.update',
         );
 
-    Route::inertia(
-        'settings/appearance',
-        'settings/appearance',
-    )->name('appearance.edit');
 });
