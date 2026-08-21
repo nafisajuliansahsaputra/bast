@@ -1,59 +1,115 @@
 # BAST — Digital Handover Management System
 
-A full-stack internal management system for creating, managing, tracking, and archiving **Berita Acara Serah Terima (BAST)** documents through a structured digital workflow.
 
-> **Sistem Informasi Berita Acara Serah Terima**
+**Sistem Informasi Berita Acara Serah Terima**
+
+
+A full-stack internal document management system for creating, managing,
+finalizing, generating, and archiving **Berita Acara Serah Terima (BAST)**
+through a structured and auditable digital workflow.
+
+
+Built with **Laravel, React, TypeScript, Inertia.js, and MySQL**.
+
+
+---
+
+
+## About the Project
+
+
+BAST is an internal management system designed to organize the lifecycle of
+handover documents through a structured, traceable, and role-based workflow.
+
+
+The application covers the process from initial document creation through
+finalization, completion, archival, revision, document generation, and
+administrative monitoring.
+
+
+Core capabilities include:
+
+
+- structured BAST creation
+- multi-step document forms
+- automatic document numbering
+- first and second party management
+- dynamic handover items
+- supporting attachments
+- document preview
+- PDF generation
+- document lifecycle management
+- archive management
+- role-based access control
+- user management
+- master data management
+- activity logging
+- two-factor authentication
+- responsive desktop and mobile interfaces
+
 
 ---
 
-## Overview
-
-BAST is an internal document management system designed to replace a fragmented manual handover-document workflow with a more structured, traceable, and role-based digital process.
-
-The application manages the complete lifecycle of a handover document, from initial draft creation through finalization, completion, archival, and administrative revision.
-
-The system includes document numbering, related parties, handover items, attachments, PDF generation, activity tracking, role-based authorization, user management, and master data management.
-
----
 
 ## Project Background
 
-The original version of this system was developed during an internship at **Diskominfo Kabupaten Cianjur in January 2024**.
 
-The original source code is no longer available. In 2026, the project was independently reconstructed from the original concept and workflow as a portfolio project.
+The original concept for this system was developed during an internship at
+**Diskominfo Kabupaten Cianjur in January 2024**.
 
-Rather than reproducing the previous implementation exactly, this reconstruction focuses on improving:
+
+The original source code is no longer available.
+
+
+In 2026, the project was independently reconstructed from the original concept
+and workflow as a modern full-stack portfolio project.
+
+
+Rather than reproducing the previous implementation exactly, the reconstruction
+focuses on improving:
+
 
 - application architecture
 - UI/UX consistency
-- access control
+- responsive design
+- authorization
 - document lifecycle management
 - validation
-- auditability
-- responsive design
 - application security
+- auditability
 - automated testing
 - developer experience
 
-This repository contains the **2026 reconstruction**, not the original 2024 internship source code.
+
+This repository contains the **2026 reconstruction**, not the original 2024
+internship source code.
+
 
 ---
+
 
 ## Disclaimer
 
-This project is an **independent reconstruction** of a system originally developed during an internship in 2024.
 
-It is presented solely as a personal portfolio and software engineering project.
+> **This project is an independent reconstruction of a system originally developed during an internship in 2024. It is presented as a portfolio project and is not an official production system of Diskominfo Kabupaten Cianjur.**
 
-**This repository is not an official application, production system, or source-code repository of Diskominfo Kabupaten Cianjur.**
 
-Names and institutional terminology are used only to preserve the context of the original project concept.
+Institutional names and document terminology are retained only to preserve the
+historical context of the original project.
+
+
+The repository uses synthetic demo data and does not contain real operational
+records or production credentials.
+
 
 ---
 
+
 ## Core Workflow
 
+
 The primary BAST lifecycle is:
+
 
 ```text
 Draft
@@ -63,11 +119,9 @@ Finalized
 Completed
   ↓
 Archived
-```
 
-An administrative revision flow is also supported:
+A finalized document can also enter an administrative revision flow:
 
-```text
 Finalized
   ↓
 Reopen
@@ -75,403 +129,367 @@ Reopen
 Draft / Revision
   ↓
 Finalized
-```
 
-A finalized BAST can also be marked as:
+A finalized document may also be:
 
-```text
 Cancelled
-```
 
-Document identity and issued document numbers are preserved when a finalized BAST is reopened or cancelled.
+Invalid lifecycle transitions are rejected by backend rules.
 
----
+When a previously numbered BAST is reopened for revision, the system can retain
+its existing document sequence when the document is finalized again.
 
-## Document Numbering
+Document Numbering
 
-Finalized BAST documents receive an automatically generated sequential document number.
+BAST generates document numbers automatically when a draft is finalized.
 
 Example:
 
-```text
 001/BAST/DISKOMINFO/VIII/2026
-```
 
-Document numbering is generated by the application to maintain sequence consistency and reduce manual numbering errors.
+The numbering process uses a dedicated document sequence record to help maintain
+consistent sequential numbering.
 
----
+BAST records also use UUID-based route identifiers rather than exposing
+incremental database IDs in application URLs.
 
-## User Roles
+Roles & Access
 
-The application uses three internal roles with different levels of access.
+The application provides three internal roles.
 
-| Capability | Super Admin | Admin | Staff |
-| --- | :---: | :---: | :---: |
-| Access dashboard | ✓ | ✓ | ✓ |
-| Create BAST | ✓ | ✓ | ✓ |
-| View all operational BAST | ✓ | ✓ | — |
-| View own BAST | ✓ | ✓ | ✓ |
-| Edit draft BAST | ✓ | ✓ | Own drafts |
-| Finalize BAST | ✓ | ✓ | Own records |
-| Generate PDF | ✓ | ✓ | Authorized records |
-| Complete BAST | ✓ | ✓ | Authorized records |
-| Archive BAST | ✓ | ✓ | Authorized records |
-| Restore archived BAST | ✓ | ✓ | — |
-| Reopen finalized BAST | ✓ | ✓ | — |
-| Cancel finalized BAST | ✓ | ✓ | — |
-| Manage master data | ✓ | ✓ | — |
-| View activity logs | ✓ | ✓ | — |
-| Manage users | ✓ | — | — |
+Capability	Super Admin	Admin	Staff
+Access dashboard	✓	✓	✓
+Create BAST	✓	✓	✓
+View operational BAST	All	All	Own / authorized
+Edit draft BAST	✓	✓	Own drafts
+Finalize BAST	✓	✓	Authorized
+Generate document / PDF	✓	✓	Authorized
+Complete BAST	✓	✓	Authorized
+Access archive	✓	✓	Authorized
+Restore archived BAST	✓	✓	—
+Reopen finalized BAST	✓	✓	—
+Cancel finalized BAST	✓	✓	—
+Manage master data	✓	✓	—
+View activity logs	✓	✓	—
+Manage users	✓	—	—
 
-Authorization is enforced on the server side and does not rely only on frontend menu visibility.
+Authorization is enforced on the server side and does not rely only on
+frontend menu visibility.
 
----
+Main Features
+BAST Management
 
-## Main Features
+Each BAST can contain structured information such as:
 
-### BAST Management
+BAST type
+department
+document date
+handover date
+handover location
+document title
+description
+first party
+second party
+one or more handover items
+item categories
+units
+quantity
+inventory information
+serial information
+supporting attachments
 
-Users can create and manage Berita Acara Serah Terima documents containing structured information such as:
+Draft documents remain editable until they are finalized.
 
-- BAST type
-- department
-- document date
-- handover date
-- handover location
-- first party
-- second party
-- handover items
-- quantities
-- units
-- item categories
-- supporting attachments
-- description and supporting information
+Multi-Step Document Form
 
-Draft records remain editable until they are finalized.
+The BAST creation workflow is divided into five logical steps:
 
----
-
-### Multi-Step Document Form
-
-The BAST creation process is divided into several logical steps to reduce form complexity.
-
-```text
 1. Informasi
 2. Pihak Terkait
 3. Item
 4. Lampiran
 5. Review
-```
 
-The editing process uses the same structured approach while adapting to an existing BAST record.
+This approach keeps a relatively complex administrative form easier to
+understand and complete.
 
----
+Existing BAST records also use a structured editing workflow.
 
-### Document Lifecycle Management
+Document Lifecycle
 
-BAST records support controlled lifecycle transitions:
+Supported document states include:
 
-```text
 Draft
 Finalized
 Completed
 Archived
 Cancelled
-```
 
-Administrative lifecycle operations include:
+Supported lifecycle operations include:
 
-- finalizing a draft
-- completing a finalized document
-- archiving a completed document
-- restoring an archived document
-- reopening a finalized document
-- cancelling a finalized document
+finalize a draft
+reopen a finalized document
+cancel a finalized document
+mark a finalized document as completed
+archive a completed document
+restore an archived document
 
-Invalid state transitions are blocked by the backend.
+Lifecycle transitions are validated by backend application logic.
 
----
+Document Revision
 
-### Document Revision
+Authorized Admin and Super Admin users can reopen finalized documents when a
+revision is required.
 
-Authorized administrators can reopen finalized BAST records when revisions are required.
+The BAST returns to a draft/revision state so its content can be updated before
+being finalized again.
 
-A reopened document returns to an editable revision state while preserving its previously issued official document identity.
+The system maintains the existing sequence information for a previously
+numbered document during this revision workflow.
 
-When finalized again, the existing sequence number is reused instead of generating a duplicate document identity.
+Document Preview & PDF Generation
 
----
+BAST includes a dedicated document preview and server-side PDF generator.
 
-### PDF Generation
+Generated documents include:
 
-The system supports server-side BAST document generation.
+Kabupaten Cianjur institutional letterhead
+document title
+document number
+first party information
+second party information
+handover date and location
+handover item table
+signature sections
+draft or cancellation indicators when applicable
+portfolio/demo identification
 
-Available functionality includes:
+PDF files are generated server-side using DomPDF.
 
-- document preview
-- finalized document PDF generation
-- PDF download
-- lifecycle-based document availability
+Draft records can be previewed but are not downloadable as finalized PDF
+documents.
 
-Draft BAST records cannot be downloaded as finalized PDF documents.
+Attachments
 
----
-
-### Attachments
-
-Supporting files can be uploaded to draft BAST records.
+Supporting documents can be associated with BAST records.
 
 Attachment handling includes:
 
-- file validation
-- file upload
-- attachment download
-- attachment deletion
-- ownership verification
-- authorization checks
-- finalized-document protection
+file validation
+upload
+download
+deletion
+authorization checks
+relationship validation
+application-managed storage
 
-Finalized BAST records cannot receive new attachments.
+Supported files are stored through the Laravel filesystem rather than being
+exposed as unmanaged public file paths.
 
----
-
-### Archive Management
+Archive Management
 
 Completed BAST records can be moved into a dedicated archive.
 
-Archived documents are separated from the main operational BAST list while retaining their historical information.
+Archived documents remain available for historical reference while being
+separated from the primary operational BAST list.
 
-Authorized administrators can restore archived documents when required.
+Authorized administrative roles can restore archived records.
 
----
+Archive is treated as part of the document lifecycle rather than as a trash
+area.
 
-### Dashboard
+Dashboard
 
-The dashboard provides database-backed operational information about BAST records.
+The dashboard provides database-backed information about current BAST
+operations.
 
 It presents information such as:
 
-- document statistics
-- lifecycle status distribution
-- recent BAST activity
-- operational document information
-- draft and revision states
+document totals
+lifecycle status distribution
+recent BAST records
+draft information
+revision information
+operational document activity
 
-The dashboard uses real application data rather than static interface placeholders.
+The dashboard uses actual application data rather than static interface
+placeholders.
 
----
+Master Data
 
-### Master Data
+Admin and Super Admin users can manage reference data used throughout the
+system.
 
-Administrators can manage reference data used throughout the system.
+Current master data includes:
 
-Supported master data includes:
+BAST types
+departments
+item categories
+units
 
-- BAST types
-- departments
-- item categories
-- units
+Master records support controlled creation and management for use across BAST
+documents.
 
-Master data can be created, updated, activated, and deactivated.
+User Management
 
-The system also protects data relationships, such as preventing departments that are still used by active users from being disabled incorrectly.
+User management is restricted to the Super Admin role.
 
----
+Supported operations include:
 
-### User Management
+create internal users
+assign roles
+assign departments
+manage NIP
+manage positions
+manage phone information
+update account information
+activate accounts
+deactivate accounts
+reset passwords
+reset two-factor authentication
+view user details
 
-User management is restricted to the **Super Admin** role.
+Administrative protections are implemented for sensitive Super Admin
+operations, including protection for the last active Super Admin account.
 
-Supported functionality includes:
-
-- creating internal users
-- assigning roles
-- assigning departments
-- managing NIP
-- managing position information
-- managing phone information
-- updating user information
-- activating users
-- deactivating users
-- resetting user passwords
-- resetting two-factor authentication
-- viewing user details
-
-Sensitive account operations include protections against:
-
-- deactivating the current Super Admin account
-- changing the current Super Admin role
-- resetting the current Super Admin password through user management
-- removing the last active Super Admin
-
----
-
-### Activity Log
+Activity Log
 
 Important application actions are recorded in an audit trail.
 
-Tracked activity includes:
+Tracked activity can include:
 
-- BAST creation and modification
-- lifecycle transitions
-- attachment operations
-- PDF and document actions
-- user management
-- master data management
-- authentication activity
-- profile changes
-- password changes
-- security-related operations
+BAST creation
+BAST updates
+lifecycle transitions
+attachment activity
+PDF generation
+user administration
+master data changes
+authentication activity
+profile changes
+password changes
+security operations
 
-Activity records may contain:
+Activity records can contain:
 
-- acting user
-- action
-- description
-- related resource
-- previous values
-- new values
-- IP address
-- user agent
-- timestamp
+acting user
+action
+description
+related resource
+previous values
+new values
+IP address
+user agent
+timestamp
 
-This provides traceability for important administrative operations.
+This provides traceability for important administrative actions.
 
----
+Authentication & Security
 
-## Authentication & Security
+BAST includes multiple security controls appropriate for an internal management
+application.
 
-BAST includes multiple security controls for an internal management application.
+Implemented controls include:
 
-Implemented security features include:
+authenticated application access
+public registration disabled
+active / inactive user enforcement
+server-side role authorization
+email verification
+password reset
+password confirmation
+login rate limiting
+two-factor authentication
+password hashing
+protected user-management operations
+database-backed sessions
 
-- authenticated application access
-- active/inactive user enforcement
-- role-based authorization
-- server-side permission checks
-- email verification
-- password reset
-- password confirmation for sensitive pages
-- login rate limiting
-- two-factor authentication
-- authenticator application setup
-- recovery codes
-- hashed passwords
-- protected sensitive user properties
-- database-backed sessions
+Application accounts are created and managed internally rather than through a
+public registration flow.
 
-Public visitors are redirected to the authentication flow before accessing internal application pages.
+Two-Factor Authentication
 
----
+Users can configure two-factor authentication from the Security section.
 
-## Two-Factor Authentication
+The security flow is built on Laravel Fortify and supports authenticator-based
+two-factor authentication.
 
-Users can enable two-factor authentication through the Security page.
+Administrative users can also reset another user's two-factor configuration
+when permitted by role and account-protection rules.
 
-The process supports:
+Responsive Interface
 
-- QR code setup
-- manual setup key
-- OTP verification
-- recovery codes
-- authentication challenge during login
-- administrative 2FA reset
+BAST is designed to remain usable across desktop and mobile layouts.
 
-The application uses Laravel Fortify for the underlying two-factor authentication flow.
+Responsive coverage includes:
 
----
+authentication
+application navigation
+dashboard
+BAST list
+BAST detail
+create workflow
+edit workflow
+archive
+master data
+user management
+activity logs
+profile settings
+security settings
 
-## Responsive Interface
+The goal is to preserve administrative usability without requiring a
+desktop-only environment.
 
-The interface is designed for both desktop and mobile use.
+UI / UX Direction
 
-Responsive work includes:
+The interface uses a restrained institutional design focused on clarity,
+consistency, readability, and predictable administrative workflows.
 
-- application sidebar
-- mobile navigation
-- dashboard
-- BAST list
-- BAST detail
-- multi-step forms
-- archive
-- master data
-- user management
-- activity logs
-- profile settings
-- security settings
-- authentication pages
+Primary palette:
 
-The objective is to keep administrative workflows usable without requiring a desktop-only environment.
-
----
-
-## UI / UX Direction
-
-The interface follows a modern institutional dashboard style.
-
-The design focuses on:
-
-- clear information hierarchy
-- restrained visual styling
-- consistent component behavior
-- readable administrative data
-- predictable workflows
-- minimal visual noise
-- consistent status presentation
-- responsive interaction
-- clear destructive-action confirmation
-
-Primary visual identity:
-
-```text
-Primary Blue   #1D5D8F
+Primary        #1D5D8F
 Primary Hover  #174C76
 Dark Blue      #123C5E
 Soft Blue      #EAF3FA
 
+
 Background     #F5F7F9
 Surface        #FFFFFF
-Primary Text   #17212B
-```
+Text           #17212B
 
-The application uses a fixed light institutional interface rather than user-selectable application themes.
+The application uses its own BAST identity.
 
----
+Government identity is not used as the application logo or favicon.
 
-## Technology Stack
+Institutional branding is limited to the generated BAST document context so the
+portfolio reconstruction is not presented as an official government software
+product.
 
-### Backend
-
-- Laravel 13
-- PHP 8.3+
-- Laravel Fortify
-- Laravel Wayfinder
-- Eloquent ORM
-- MySQL
-- DomPDF
-- Larastan / PHPStan
-- Laravel Pint
-- Pest
-
-### Frontend
-
-- React 19
-- TypeScript
-- Inertia.js 3
-- Tailwind CSS 4
-- shadcn/ui
-- Radix UI
-- Lucide Icons
-- Sonner
-- Vite
-
----
-
-## Application Architecture
+Technology Stack
+Backend
+Laravel 13
+PHP 8.3+
+Laravel Fortify
+Laravel Wayfinder
+Eloquent ORM
+MySQL
+DomPDF
+Larastan / PHPStan
+Laravel Pint
+Pest
+Frontend
+React 19
+TypeScript
+Inertia.js 3
+Tailwind CSS 4
+Radix UI
+Lucide Icons
+Sonner
+Vite
+Architecture
 
 BAST uses a Laravel + Inertia architecture.
 
-```text
 Browser
    │
    ▼
@@ -481,296 +499,203 @@ React + TypeScript
 Inertia.js
    │
    ▼
-Laravel Routes
+Laravel Application
    │
-   ▼
-Controllers
-   │
-   ├── Middleware / Authorization
-   │
+   ├── Authentication
+   ├── Middleware
+   ├── Authorization
    ├── Validation
-   │
-   └── Application Logic
+   ├── Controllers
+   └── Services
    │
    ▼
-Eloquent Models
+Eloquent ORM
    │
    ▼
 MySQL
-```
 
-This architecture allows the application to provide a React-based interface while retaining Laravel routing, authentication, validation, authorization, and backend application structure.
+This architecture provides a React-based interface while Laravel remains
+responsible for routing, authentication, validation, authorization, backend
+application logic, persistence, and document generation.
 
 A separate REST API is not required for normal application navigation.
 
----
+Main Data Model
 
-## Data Model
+Core relational entities include:
 
-The application contains relational data for areas such as:
-
-```text
 users
 roles
 departments
+
+
 basts
 bast_types
 bast_parties
 bast_items
 bast_attachments
-units
+
+
 item_categories
+units
+
+
 activity_logs
 document_sequences
-```
 
-BAST records are related to their creator, department, type, involved parties, handover items, attachments, lifecycle actors, and audit history.
+BAST records are related to:
 
----
-
-## BAST Identity
-
-BAST records use UUID-based route identifiers rather than exposing sequential database IDs in application URLs.
-
-The system also maintains separate official document information such as:
-
-- sequence number
-- document number
-- document code
-- document month
-- document year
-
-This separates internal record identity from official document identity.
-
----
-
-## Project Structure
-
-Important application areas include:
-
-```text
-app/
-├── Http/
-│   ├── Controllers/
-│   └── Middleware/
-├── Models/
-└── ...
-
-config/
-
-database/
-├── factories/
-├── migrations/
-└── seeders/
-
-resources/
-├── css/
-├── js/
-│   ├── components/
-│   ├── hooks/
-│   ├── layouts/
-│   ├── pages/
-│   └── types/
-└── views/
-
-routes/
-├── web.php
-└── settings.php
-
-tests/
-├── Feature/
-└── Unit/
-```
-
----
-
-## Local Development Setup
-
-### Requirements
+creator
+department
+BAST type
+involved parties
+handover items
+attachments
+lifecycle actors
+activity history
+Local Development
+Requirements
 
 Make sure the following software is available:
 
-- PHP 8.3 or newer
-- Composer
-- Node.js
-- npm
-- MySQL
-- Git
+PHP 8.3+
+Composer
+Node.js
+npm
+MySQL
+Git
 
-A local development environment such as **Laragon** can be used on Windows.
+A Windows environment such as Laragon can be used, but it is not required.
 
----
-
-### Clone the Repository
-
-```bash
+1. Clone the Repository
 git clone https://github.com/nafisajuliansahsaputra/bast.git
 cd bast
-```
-
----
-
-### Install PHP Dependencies
-
-```bash
+2. Install Dependencies
 composer install
-```
-
----
-
-### Create Environment File
+npm install
+3. Create Environment File
 
 Windows PowerShell:
 
-```powershell
 Copy-Item .env.example .env
-```
 
-Linux or macOS:
+Linux / macOS:
 
-```bash
 cp .env.example .env
-```
 
-Generate an application key:
+Generate the Laravel application key:
 
-```bash
 php artisan key:generate
-```
+4. Configure MySQL
 
----
+Create a local MySQL database named:
 
-### Configure MySQL
-
-Create a MySQL database named:
-
-```text
 bast
-```
 
-Default local configuration:
+Example configuration:
 
-```dotenv
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=bast
 DB_USERNAME=root
 DB_PASSWORD=
-```
 
-Adjust the values according to your local database environment.
+Adjust these values according to your local database environment.
 
----
+5. Configure BAST
 
-### Configure BAST
+Application-specific document configuration:
 
-Application-specific configuration can be defined through `.env`.
-
-```dotenv
 BAST_DOCUMENT_CODE=BAST
 BAST_INSTITUTION_CODE=DISKOMINFO
-```
 
-Configure the initial Super Admin account before running the database seeder:
+Configure the initial local Super Admin account:
 
-```dotenv
 BAST_SUPER_ADMIN_EMAIL=admin@bast.local
-BAST_SUPER_ADMIN_PASSWORD=your-secure-local-password
-```
+BAST_SUPER_ADMIN_PASSWORD=choose-a-secure-local-password
 
 The repository does not contain a universal Super Admin password.
 
-Do not commit real credentials into version control.
+Never commit local credentials into version control.
 
----
+6. Prepare the Database
 
-### Run Database Migrations
+Run migrations and seed the local environment:
 
-```bash
-php artisan migrate
-```
+php artisan migrate --seed
 
----
+The seed process prepares:
 
-### Run Database Seeders
+application roles
+initial master data
+departments
+local Super Admin account
+synthetic Admin accounts
+synthetic Staff accounts
+synthetic BAST records
+multiple BAST lifecycle states
+activity history
+demo attachments
 
-```bash
-php artisan db:seed
-```
+The generated records are intended for local development and portfolio
+presentation.
 
-The seeders prepare the base application data including:
+To completely reset the local database:
 
-- roles
-- initial master data
-- system administration department
-- initial Super Admin account
+php artisan migrate:fresh --seed
 
----
+This command deletes the current local database tables before rebuilding and
+reseeding them.
 
-### Install Frontend Dependencies
-
-```bash
-npm install
-```
-
----
-
-### Start Development Environment
-
-```bash
+7. Start Development
 composer run dev
-```
+
+The development command starts the Laravel application server, queue listener,
+and Vite development server.
 
 The application is available by default at:
 
-```text
 http://localhost:8000
-```
-
----
-
-## Development Commands
+Development Commands
 
 Format frontend resources:
 
-```bash
 npm run format
-```
+
+Check frontend formatting:
+
+npm run format:check
 
 Run frontend linting:
 
-```bash
 npm run lint:check
-```
 
 Run TypeScript validation:
 
-```bash
 npm run types:check
-```
 
-Run Laravel Pint:
+Format PHP:
 
-```bash
 composer run lint
-```
+
+Check PHP formatting without modifying files:
+
+composer run lint:check
+
+Run PHP static analysis:
+
+composer run types:check
 
 Run the complete project quality gate:
 
-```bash
 composer run ci:check
-```
-
----
-
-## Quality Assurance
+Quality Assurance
 
 The project includes automated frontend and backend quality checks.
 
-`composer run ci:check` verifies:
+The complete quality gate validates:
 
-```text
 ESLint
 Prettier
 TypeScript
@@ -778,222 +703,129 @@ Laravel configuration
 Laravel Pint
 PHPStan / Larastan
 Pest
-```
 
-Latest local quality verification:
+Test counts are intentionally not hardcoded in this README so the
+documentation does not become stale as the project evolves.
 
-```text
-114 tests passed
-499 assertions
-```
+Automated Testing
 
----
+The test suite covers important application behavior such as:
 
-## Automated Test Coverage
-
-Feature tests cover major application behavior including:
-
-- authentication
-- login rate limiting
-- email verification
-- password confirmation
-- password reset
-- two-factor authentication
-- authorization middleware
-- active account enforcement
-- BAST creation
-- BAST validation
-- BAST editing
-- ownership restrictions
-- document finalization
-- sequential numbering
-- document completion
-- archiving
-- archive restoration
-- finalized document reopening
-- BAST cancellation
-- attachment upload
-- attachment download
-- attachment deletion
-- PDF preview
-- PDF generation
-- dashboard access
-- BAST status presentation
-- master data management
-- profile management
-- security settings
-- activity logging
-- user management
-
-The current automated test suite contains:
-
-```text
-114 tests
-499 assertions
-```
-
----
-
-## Screenshots
-
-Final portfolio screenshots will cover the primary user flows.
-
-Planned screenshot set:
-
-```text
-Login
-Dashboard
-BAST List
-Create BAST
-BAST Detail
-Document Preview
-Archive
-Master Data
-User Management
-Activity Log
-Profile
-Security
-Mobile Interface
-```
-
-Screenshots can be stored under:
-
-```text
-docs/screenshots/
-```
-
-Example future structure:
-
-```text
-docs/
-└── screenshots/
-    ├── login.png
-    ├── dashboard.png
-    ├── bast-list.png
-    ├── bast-create.png
-    ├── bast-detail.png
-    ├── document-preview.png
-    ├── archive.png
-    ├── master-data.png
-    ├── users.png
-    ├── activity-log.png
-    └── mobile.png
-```
-
----
-
-## Development Focus
-
-This reconstruction is intended to demonstrate practical full-stack software engineering skills including:
-
-- requirements reconstruction
-- database modeling
-- relational application design
-- authentication
-- authorization
-- middleware
-- stateful workflow design
-- document lifecycle management
-- backend validation
-- file handling
-- document generation
-- audit logging
-- responsive frontend development
-- application security
-- TypeScript integration
-- automated testing
-- static analysis
-- refactoring
-- code quality enforcement
-- developer tooling
-
----
-
-## Reconstruction: 2024 → 2026
-
-The reconstruction process represents more than a visual remake.
-
-The 2026 version expands the original concept into a more complete application with:
-
-```text
-Structured role-based access
-Multi-step BAST workflows
-Lifecycle protection
-Sequential document numbering
-Administrative revision
-Document cancellation
-Archive management
-Dynamic attachments
+authentication
+login rate limiting
+email verification
+password reset
+password confirmation
+two-factor authentication
+role authorization
+active account enforcement
+BAST creation
+BAST validation
+BAST editing
+ownership restrictions
+finalization
+document numbering
+completion
+archive operations
+archive restoration
+finalized-document reopening
+cancellation
+attachment operations
+document preview
 PDF generation
-Activity logging
-User administration
-Master data management
-Email verification
-Two-factor authentication
-Responsive UI
-Automated testing
-Static analysis
-Code quality tooling
-```
+dashboard access
+master data management
+user management
+profile management
+security settings
+activity logging
 
-The goal of this project is to demonstrate how an earlier internship concept can be revisited and rebuilt using stronger software engineering practices.
+Run the application test suite through:
 
----
+composer run ci:check
+Demo Data
 
-## Project Status
+The repository includes a dedicated demo data seeder intended to make the
+application usable immediately after local setup.
 
-The primary application workflow is complete.
+The seeded dataset contains synthetic information only.
 
-Implemented areas:
+Demo data includes multiple examples across states such as:
 
-```text
-✓ Authentication
-✓ Email verification
-✓ Password reset
-✓ Two-factor authentication
-✓ Role-based access control
-✓ Active user protection
-✓ Dashboard
-✓ BAST management
-✓ Multi-step BAST form
-✓ Related parties
-✓ Handover items
-✓ Attachments
-✓ Document lifecycle
-✓ Sequential document numbering
-✓ Administrative revision
-✓ BAST cancellation
-✓ PDF preview
-✓ PDF export
-✓ Archive
-✓ Master data
-✓ User management
-✓ Activity logs
-✓ Profile settings
-✓ Security settings
-✓ Responsive interface
-✓ Automated tests
-✓ TypeScript validation
-✓ PHP static analysis
-✓ Code formatting and linting
-```
+Draft
+Revision
+Finalized
+Completed
+Archived
+Cancelled
 
-Remaining work is primarily related to portfolio presentation and final visual documentation.
+It also includes:
 
----
+synthetic internal users
+synthetic external parties
+departments
+handover items
+document sequences
+activity logs
+supporting demo attachments
 
-## Author
+The purpose of this dataset is to provide realistic development and portfolio
+content without requiring manual data entry.
 
-**Nafisa Juliansah Saputra**
+Portfolio Status
 
-Full-Stack Development · UI/UX Design · Digital Product Development
+The current reconstruction covers the complete primary application flow:
 
----
+Authentication
+        ↓
+Dashboard
+        ↓
+BAST Management
+        ↓
+Document Lifecycle
+        ↓
+Document Preview / PDF
+        ↓
+Archive
+        ↓
+Administrative Management
 
-## License
+The project currently includes:
 
-This repository is maintained as a **portfolio project** and is currently marked as proprietary.
+completed core BAST workflow
+role-based authorization
+lifecycle management
+archive management
+activity auditing
+user administration
+master data management
+authentication and security
+responsive layouts
+dedicated BAST branding
+synthetic portfolio data
+official-style BAST document output
+automated quality checks
 
-The source code is publicly visible for demonstration and evaluation purposes.
+Additional screenshots and case-study presentation assets can be stored under
+docs/ without changing the core application architecture.
 
-No permission is granted to redistribute, relicense, sell, or represent this project as an official government system without explicit authorization.
+Repository Notes
+
+This repository is intended as a software engineering and UI/UX portfolio
+project.
+
+It should not be interpreted as:
+
+an official Diskominfo Kabupaten Cianjur repository
+an official government production deployment
+the source of official government documents
+the original 2024 internship repository
+
+The project demonstrates the independent reconstruction and modernization of an
+earlier internship system concept.
+
+License
+
+Proprietary — portfolio project.
+
+All rights reserved.
