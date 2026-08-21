@@ -12,6 +12,7 @@ RUN apt-get update \
         libicu-dev \
         libonig-dev \
         libzip-dev \
+        libsqlite3-dev \
         libpng-dev \
         libjpeg62-turbo-dev \
         libfreetype6-dev \
