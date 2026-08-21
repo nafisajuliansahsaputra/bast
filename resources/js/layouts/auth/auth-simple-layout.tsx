@@ -1,4 +1,5 @@
-import { Archive, FileCheck2, ShieldCheck, Workflow } from 'lucide-react';
+import { Archive, ShieldCheck, Workflow } from 'lucide-react';
+import AppLogoIcon from '@/components/app-logo-icon';
 import type { AuthLayoutProps } from '@/types';
 
 const benefits = [
@@ -43,17 +44,15 @@ export default function AuthSimpleLayout({
 
                     <div className="relative z-10">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-11 items-center justify-center rounded-[10px] bg-white/10 ring-1 ring-white/15">
-                                <FileCheck2
-                                    className="size-6"
-                                    strokeWidth={1.8}
-                                />
+                            <div className="flex size-11 items-center justify-center rounded-[10px] bg-white/10 text-white ring-1 ring-white/15">
+                                <AppLogoIcon className="size-6" />
                             </div>
 
                             <div>
                                 <div className="text-lg font-semibold tracking-[-0.02em]">
                                     BAST
                                 </div>
+
                                 <div className="text-xs text-blue-100/70">
                                     Digital Handover Management System
                                 </div>
@@ -63,7 +62,7 @@ export default function AuthSimpleLayout({
 
                     <div className="relative z-10 my-auto max-w-xl py-16">
                         <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-1.5 text-xs font-medium text-blue-50">
-                            Sistem Informasi Internal
+                            Internal Document Management
                         </div>
 
                         <h1 className="max-w-lg text-4xl leading-[1.15] font-semibold tracking-[-0.035em] xl:text-[44px]">
@@ -97,6 +96,7 @@ export default function AuthSimpleLayout({
                                             <p className="text-sm font-medium text-white">
                                                 {benefit.title}
                                             </p>
+
                                             <p className="mt-1 max-w-md text-[13px] leading-5 text-blue-100/65">
                                                 {benefit.description}
                                             </p>
@@ -107,8 +107,19 @@ export default function AuthSimpleLayout({
                         </div>
                     </div>
 
-                    <div className="relative z-10 border-t border-white/10 pt-6 text-xs leading-5 text-blue-100/55">
-                        Sistem Informasi Berita Acara Serah Terima
+                    <div className="relative z-10 border-t border-white/10 pt-6">
+                        <p className="text-xs font-medium text-blue-50/80">
+                            Independent reconstruction
+                        </p>
+
+                        <p className="mt-1 text-[11px] leading-5 text-blue-100/45">
+                            Originally developed during an internship at
+                            Diskominfo Kabupaten Cianjur · 2024
+                        </p>
+
+                        <p className="mt-1 text-[11px] text-blue-100/45">
+                            Designed &amp; developed by NATSX
+                        </p>
                     </div>
                 </section>
 
@@ -116,16 +127,14 @@ export default function AuthSimpleLayout({
                     <div className="flex items-center px-6 py-6 lg:hidden">
                         <div className="flex items-center gap-3">
                             <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#1D5D8F] text-white">
-                                <FileCheck2
-                                    className="size-[21px]"
-                                    strokeWidth={1.9}
-                                />
+                                <AppLogoIcon className="size-[21px]" />
                             </div>
 
                             <div>
                                 <p className="font-semibold tracking-[-0.02em] text-[#17212B]">
                                     BAST
                                 </p>
+
                                 <p className="text-[11px] text-[#71808D]">
                                     Digital Handover Management System
                                 </p>
@@ -137,10 +146,7 @@ export default function AuthSimpleLayout({
                         <div className="w-full max-w-[430px]">
                             <div className="mb-8">
                                 <div className="mb-5 hidden size-12 items-center justify-center rounded-[10px] bg-[#EAF3FA] text-[#1D5D8F] lg:flex">
-                                    <FileCheck2
-                                        className="size-6"
-                                        strokeWidth={1.8}
-                                    />
+                                    <AppLogoIcon className="size-6" />
                                 </div>
 
                                 <h2 className="text-[28px] leading-tight font-semibold tracking-[-0.03em] text-[#17212B]">
@@ -158,10 +164,16 @@ export default function AuthSimpleLayout({
                                 {children}
                             </div>
 
-                            <p className="mt-6 text-center text-xs leading-5 text-[#8A96A0]">
-                                Akses sistem hanya diperuntukkan bagi pengguna
-                                yang memiliki akun terdaftar.
-                            </p>
+                            <div className="mt-6 text-center">
+                                <p className="text-xs leading-5 text-[#8A96A0]">
+                                    Akses sistem hanya diperuntukkan bagi
+                                    pengguna yang memiliki akun terdaftar.
+                                </p>
+
+                                <p className="mt-2 text-[10px] text-[#A1AAB2]">
+                                    Independent portfolio reconstruction · NATSX
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>

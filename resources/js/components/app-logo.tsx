@@ -13,7 +13,7 @@ export default function AppLogo() {
                 </span>
 
                 <span className="truncate text-[10px] text-white/50">
-                    Internal Management System
+                    Digital Handover System
                 </span>
             </div>
         </>

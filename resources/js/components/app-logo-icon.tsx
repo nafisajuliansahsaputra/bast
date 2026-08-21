@@ -9,23 +9,47 @@ export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
             xmlns="http://www.w3.org/2000/svg"
         >
             <path
-                d="M7.75 3.75H14.25L18.25 7.75V19.25C18.25 19.8023 17.8023 20.25 17.25 20.25H7.75C7.19772 20.25 6.75 19.8023 6.75 19.25V4.75C6.75 4.19772 7.19772 3.75 7.75 3.75Z"
+                d="M7.25 3.5H13.75L17.25 7V19.25C17.25 19.9404 16.6904 20.5 16 20.5H7.25C6.55964 20.5 6 19.9404 6 19.25V4.75C6 4.05964 6.55964 3.5 7.25 3.5Z"
                 stroke="currentColor"
-                strokeWidth="1.6"
+                strokeWidth="1.55"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
+
             <path
-                d="M14.25 3.75V7.75H18.25"
+                d="M13.75 3.5V7H17.25"
                 stroke="currentColor"
-                strokeWidth="1.6"
+                strokeWidth="1.55"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
+
             <path
-                d="M9.25 13L11.25 15L15.5 10.75"
+                d="M8.75 10.25H14.75"
                 stroke="currentColor"
-                strokeWidth="1.6"
+                strokeWidth="1.55"
+                strokeLinecap="round"
+            />
+
+            <path
+                d="M12.75 8.25L14.75 10.25L12.75 12.25"
+                stroke="currentColor"
+                strokeWidth="1.55"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+
+            <path
+                d="M14.5 14H8.5"
+                stroke="currentColor"
+                strokeWidth="1.55"
+                strokeLinecap="round"
+            />
+
+            <path
+                d="M10.5 12L8.5 14L10.5 16"
+                stroke="currentColor"
+                strokeWidth="1.55"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />

@@ -127,6 +127,16 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter className="border-t border-white/[0.07] bg-[#123C5E] p-3">
+                <div className="px-2 pt-1 pb-2 group-data-[collapsible=icon]:hidden">
+                    <p className="text-[10px] font-medium tracking-wide text-white/55">
+                        INDEPENDENT RECONSTRUCTION
+                    </p>
+
+                    <p className="mt-1 text-[10px] leading-4 text-white/35">
+                        Designed &amp; developed by NATSX
+                    </p>
+                </div>
+
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
