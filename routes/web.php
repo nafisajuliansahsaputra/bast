@@ -11,6 +11,7 @@ use App\Http\Controllers\Master\DepartmentController;
 use App\Http\Controllers\Master\ItemCategoryController;
 use App\Http\Controllers\Master\UnitController;
 use App\Http\Controllers\MasterDataController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia(
@@ -239,15 +240,53 @@ Route::middleware([
     Route::middleware(
         'role:super-admin',
     )->group(function () {
-        Route::inertia(
+        Route::get(
             'users',
-            'module-placeholder',
             [
-                'title' => 'Pengguna',
-                'description' => 'Modul pengelolaan akun pengguna dan hak akses sedang dipersiapkan.',
-                'href' => '/users',
+                UserController::class,
+                'index',
             ],
         )->name('users.index');
+
+        Route::post(
+            'users',
+            [
+                UserController::class,
+                'store',
+            ],
+        )->name('users.store');
+
+        Route::get(
+            'users/{user}',
+            [
+                UserController::class,
+                'show',
+            ],
+        )->name('users.show');
+
+        Route::put(
+            'users/{user}',
+            [
+                UserController::class,
+                'update',
+            ],
+        )->name('users.update');
+
+        Route::patch(
+            'users/{user}/status',
+            [
+                UserController::class,
+                'toggleStatus',
+            ],
+        )->name('users.toggle-status');
+
+        Route::post(
+            'users/{user}/reset-password',
+            [
+                UserController::class,
+                'resetPassword',
+            ],
+        )->name('users.reset-password');
     });
 });
 
