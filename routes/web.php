@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\BastAttachmentController;
 use App\Http\Controllers\BastController;
@@ -226,15 +227,21 @@ Route::middleware([
             ],
         )->name('master.units.toggle');
 
-        Route::inertia(
+        Route::get(
             'activity-logs',
-            'module-placeholder',
             [
-                'title' => 'Activity Log',
-                'description' => 'Riwayat aktivitas dan audit sistem sedang dipersiapkan.',
-                'href' => '/activity-logs',
+                ActivityLogController::class,
+                'index',
             ],
         )->name('activity-logs.index');
+
+        Route::get(
+            'activity-logs/{activityLog}',
+            [
+                ActivityLogController::class,
+                'show',
+            ],
+        )->name('activity-logs.show');
     });
 
     Route::middleware(

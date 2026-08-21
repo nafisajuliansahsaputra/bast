@@ -471,13 +471,13 @@ class UserController extends Controller
                     ? 'inactive'
                     : 'active';
 
-                $user->update([
+                $user->forceFill([
                     'status' => $newStatus,
 
                     'remember_token' => Str::random(
                         60,
                     ),
-                ]);
+                ])->save();
 
                 $user->refresh();
 
@@ -549,7 +549,7 @@ class UserController extends Controller
                 $hadTwoFactor =
                     $user->two_factor_secret !== null;
 
-                $user->update([
+                $user->forceFill([
                     'password' => $temporaryPassword,
 
                     'two_factor_secret' => null,
@@ -561,7 +561,7 @@ class UserController extends Controller
                     'remember_token' => Str::random(
                         60,
                     ),
-                ]);
+                ])->save();
 
                 $this->deleteDatabaseSessions(
                     $user,
