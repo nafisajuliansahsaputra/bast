@@ -13,6 +13,8 @@ import { request } from '@/routes/password';
 type Props = {
     status?: string;
     canResetPassword: boolean;
+    demoMode: boolean;
+    demoReadOnly: boolean;
 };
 
 function normalizeLoginError(message?: string): string | undefined {
@@ -31,7 +33,12 @@ function normalizeLoginError(message?: string): string | undefined {
     return message;
 }
 
-export default function Login({ status, canResetPassword }: Props) {
+export default function Login({
+    status,
+    canResetPassword,
+    demoMode,
+    demoReadOnly,
+}: Props) {
     return (
         <>
             <Head title="Masuk" />
@@ -138,6 +145,47 @@ export default function Login({ status, canResetPassword }: Props) {
                     </>
                 )}
             </Form>
+
+            {demoMode && (
+                <div className="mt-6 border-t border-[#E1E6EA] pt-5">
+                    <div className="mb-4 text-center">
+                        <p className="text-sm font-semibold text-[#344250]">
+                            Portfolio Demo
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-[#6F7D89]">
+                            Masuk langsung untuk melihat dashboard, dokumen
+                            BAST, arsip, data master, dan activity log tanpa
+                            memasukkan akun.
+                        </p>
+                    </div>
+
+                    <Form action="/demo-login" method="post">
+                        {({ processing }) => (
+                            <Button
+                                type="submit"
+                                variant="outline"
+                                className="h-11 w-full border-[#1D5D8F] bg-white font-medium text-[#1D5D8F] shadow-none hover:bg-[#EAF3FA] hover:text-[#174C76]"
+                                disabled={processing}
+                                data-test="demo-login-button"
+                            >
+                                {processing && <Spinner />}
+
+                                {processing
+                                    ? 'Membuka Demo...'
+                                    : 'Explore Demo'}
+                            </Button>
+                        )}
+                    </Form>
+
+                    {demoReadOnly && (
+                        <p className="mt-3 text-center text-[11px] leading-4 text-[#8A96A1]">
+                            Mode demo bersifat read-only dan menggunakan data
+                            sintetis untuk kebutuhan portfolio.
+                        </p>
+                    )}
+                </div>
+            )}
         </>
     );
 }

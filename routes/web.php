@@ -7,6 +7,7 @@ use App\Http\Controllers\BastController;
 use App\Http\Controllers\BastDocumentController;
 use App\Http\Controllers\BastLifecycleController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\Master\BastTypeController;
 use App\Http\Controllers\Master\DepartmentController;
 use App\Http\Controllers\Master\ItemCategoryController;
@@ -20,6 +21,16 @@ Route::get('/', function () {
         ? to_route('dashboard')
         : to_route('login');
 })->name('home');
+
+Route::post(
+    'demo-login',
+    DemoLoginController::class,
+)
+    ->middleware([
+        'guest',
+        'throttle:10,1',
+    ])
+    ->name('demo.login');
 
 Route::middleware([
     'auth',

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureDemoIsReadOnly;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireRole;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            EnsureDemoIsReadOnly::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

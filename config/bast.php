@@ -22,4 +22,21 @@ return [
             'BAST_SUPER_ADMIN_PASSWORD',
         ),
     ],
+
+    'demo' => [
+        'enabled' => env(
+            'BAST_DEMO_MODE',
+            false,
+        ),
+
+        'email' => env(
+            'BAST_DEMO_EMAIL',
+            'rina.maharani@bast.local',
+        ),
+
+        'read_only' => env(
+            'BAST_DEMO_READ_ONLY',
+            true,
+        ),
+    ],
 ];
