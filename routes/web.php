@@ -15,10 +15,11 @@ use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia(
-    '/',
-    'welcome',
-)->name('home');
+Route::get('/', function () {
+    return auth()->check()
+        ? to_route('dashboard')
+        : to_route('login');
+})->name('home');
 
 Route::middleware([
     'auth',

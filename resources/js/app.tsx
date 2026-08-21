@@ -10,19 +10,21 @@ const appName = import.meta.env.VITE_APP_NAME || 'BAST';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
+
     layout: (name) => {
-        switch (true) {
-            case name === 'welcome':
-                return null;
-            case name.startsWith('auth/'):
-                return AuthLayout;
-            case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
-            default:
-                return AppLayout;
+        if (name.startsWith('auth/')) {
+            return AuthLayout;
         }
+
+        if (name.startsWith('settings/')) {
+            return [AppLayout, SettingsLayout];
+        }
+
+        return AppLayout;
     },
+
     strictMode: true,
+
     withApp(app) {
         return (
             <TooltipProvider delayDuration={0}>
@@ -31,10 +33,10 @@ createInertiaApp({
             </TooltipProvider>
         );
     },
+
     progress: {
         color: '#1D5D8F',
     },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();
