@@ -11,8 +11,8 @@ import {
     Search,
     Tags,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 import {
     store as storeBastType,
     toggle as toggleBastType,
@@ -98,6 +98,12 @@ type ToggleTarget = {
     type: MasterTab;
 };
 
+type MobileDetail = {
+    label: string;
+    value: string;
+    mono?: boolean;
+};
+
 const tabConfig: Array<{
     key: MasterTab;
     label: string;
@@ -137,15 +143,10 @@ export default function MasterIndex({
     units,
 }: Props) {
     const [activeTab, setActiveTab] = useState<MasterTab>('bast-types');
-
     const [search, setSearch] = useState('');
-
     const [formOpen, setFormOpen] = useState(false);
-
     const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
-
     const [toggleTarget, setToggleTarget] = useState<ToggleTarget | null>(null);
-
     const [toggling, setToggling] = useState(false);
 
     const { data, setData, post, put, processing, errors, reset, clearErrors } =
@@ -235,6 +236,15 @@ export default function MasterIndex({
         setEditTarget(null);
         reset();
         clearErrors();
+    };
+
+    const openToggle = (item: BaseMaster, type: MasterTab) => {
+        setToggleTarget({
+            id: item.id,
+            name: item.name,
+            is_active: item.is_active,
+            type,
+        });
     };
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -346,15 +356,15 @@ export default function MasterIndex({
         <>
             <Head title="Data Master" />
 
-            <div className="flex flex-1 flex-col px-5 py-6 md:px-8 md:py-8">
-                <div className="mx-auto w-full max-w-[1400px]">
+            <div className="flex min-w-0 flex-1 flex-col px-4 py-5 sm:px-5 sm:py-6 md:px-8 md:py-8">
+                <div className="mx-auto w-full max-w-[1400px] min-w-0">
                     <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
-                        <div>
-                            <h1 className="text-[28px] font-semibold tracking-[-0.035em] text-[#17212B]">
+                        <div className="min-w-0">
+                            <h1 className="text-[26px] font-semibold tracking-[-0.035em] text-[#17212B] sm:text-[28px]">
                                 Data Master
                             </h1>
 
-                            <p className="mt-1.5 text-sm text-[#71808C]">
+                            <p className="mt-1.5 text-sm leading-6 text-[#71808C]">
                                 Kelola data referensi yang digunakan pada proses
                                 Berita Acara Serah Terima.
                             </p>
@@ -363,17 +373,16 @@ export default function MasterIndex({
                         <Button
                             type="button"
                             onClick={openCreate}
-                            className="h-10 bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76]"
+                            className="h-10 w-full bg-[#1D5D8F] px-4 text-white shadow-none hover:bg-[#174C76] lg:w-auto"
                         >
                             <Plus className="size-4" />
                             Tambah {currentConfig.label}
                         </Button>
                     </div>
 
-                    <section className="mt-7 grid gap-3 lg:grid-cols-4">
+                    <section className="mt-6 grid gap-3 sm:grid-cols-2 md:mt-7 lg:grid-cols-4">
                         {tabConfig.map((tab) => {
                             const Icon = tab.icon;
-
                             const active = activeTab === tab.key;
 
                             return (
@@ -382,16 +391,15 @@ export default function MasterIndex({
                                     type="button"
                                     onClick={() => {
                                         setActiveTab(tab.key);
-
                                         setSearch('');
                                     }}
-                                    className={`rounded-[10px] border p-4 text-left transition ${
+                                    className={`min-w-0 rounded-[10px] border p-4 text-left transition ${
                                         active
                                             ? 'border-[#9FC0D7] bg-[#EEF5FA]'
                                             : 'border-[#DDE3E8] bg-white hover:border-[#C8D3DB] hover:bg-[#FAFBFC]'
                                     }`}
                                 >
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex min-w-0 items-start gap-3">
                                         <div
                                             className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
                                                 active
@@ -402,9 +410,9 @@ export default function MasterIndex({
                                             <Icon className="size-4" />
                                         </div>
 
-                                        <div>
+                                        <div className="min-w-0">
                                             <p
-                                                className={`text-sm font-semibold ${
+                                                className={`text-sm font-semibold break-words ${
                                                     active
                                                         ? 'text-[#1D5D8F]'
                                                         : 'text-[#344250]'
@@ -413,7 +421,7 @@ export default function MasterIndex({
                                                 {tab.label}
                                             </p>
 
-                                            <p className="mt-1 text-[11px] leading-4 text-[#87949F]">
+                                            <p className="mt-1 text-[11px] leading-4 break-words text-[#87949F]">
                                                 {tab.description}
                                             </p>
                                         </div>
@@ -423,8 +431,8 @@ export default function MasterIndex({
                         })}
                     </section>
 
-                    <section className="mt-4 overflow-hidden rounded-[10px] border border-[#DDE3E8] bg-white">
-                        <div className="flex flex-col gap-4 border-b border-[#E5E9EC] p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <section className="mt-4 min-w-0 overflow-hidden rounded-[10px] border border-[#DDE3E8] bg-white">
+                        <div className="flex flex-col gap-4 border-b border-[#E5E9EC] p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <h2 className="text-[15px] font-semibold text-[#344250]">
                                     {currentConfig.label}
@@ -435,7 +443,7 @@ export default function MasterIndex({
                                 </p>
                             </div>
 
-                            <div className="relative w-full sm:max-w-[340px]">
+                            <div className="relative w-full md:max-w-[340px]">
                                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8C98A2]" />
 
                                 <Input
@@ -450,200 +458,323 @@ export default function MasterIndex({
                         </div>
 
                         {activeTab === 'bast-types' && (
-                            <MasterTable
-                                headers={[
-                                    'Nama',
-                                    'Slug',
-                                    'Dipakai',
-                                    'Status',
-                                    'Aksi',
-                                ]}
-                                empty={filteredBastTypes.length === 0}
-                            >
-                                {filteredBastTypes.map((item) => (
-                                    <tr
-                                        key={item.id}
-                                        className="border-b border-[#EDF0F2] last:border-b-0"
-                                    >
-                                        <MasterNameCell
+                            <>
+                                <MobileMasterList
+                                    empty={filteredBastTypes.length === 0}
+                                >
+                                    {filteredBastTypes.map((item) => (
+                                        <MasterMobileCard
+                                            key={item.id}
                                             name={item.name}
                                             description={item.description}
-                                        />
-
-                                        <td className="px-5 py-4 font-mono text-xs text-[#71808C]">
-                                            {item.slug}
-                                        </td>
-
-                                        <td className="px-5 py-4 text-xs text-[#657481]">
-                                            {item.basts_count} BAST
-                                        </td>
-
-                                        <StatusCell active={item.is_active} />
-
-                                        <ActionCell
                                             active={item.is_active}
+                                            details={[
+                                                {
+                                                    label: 'Slug',
+                                                    value: item.slug,
+                                                    mono: true,
+                                                },
+                                                {
+                                                    label: 'Dipakai',
+                                                    value: `${item.basts_count} BAST`,
+                                                },
+                                            ]}
                                             onEdit={() => openEdit(item)}
                                             onToggle={() =>
-                                                setToggleTarget({
-                                                    id: item.id,
-                                                    name: item.name,
-                                                    is_active: item.is_active,
-                                                    type: 'bast-types',
-                                                })
+                                                openToggle(item, 'bast-types')
                                             }
                                         />
-                                    </tr>
-                                ))}
-                            </MasterTable>
+                                    ))}
+                                </MobileMasterList>
+
+                                <DesktopMasterTable
+                                    headers={[
+                                        'Nama',
+                                        'Slug',
+                                        'Dipakai',
+                                        'Status',
+                                        'Aksi',
+                                    ]}
+                                    empty={filteredBastTypes.length === 0}
+                                >
+                                    {filteredBastTypes.map((item) => (
+                                        <tr
+                                            key={item.id}
+                                            className="border-b border-[#EDF0F2] last:border-b-0"
+                                        >
+                                            <MasterNameCell
+                                                name={item.name}
+                                                description={item.description}
+                                            />
+
+                                            <td className="px-5 py-4 font-mono text-xs text-[#71808C]">
+                                                {item.slug}
+                                            </td>
+
+                                            <td className="px-5 py-4 text-xs text-[#657481]">
+                                                {item.basts_count} BAST
+                                            </td>
+
+                                            <StatusCell
+                                                active={item.is_active}
+                                            />
+
+                                            <ActionCell
+                                                active={item.is_active}
+                                                onEdit={() => openEdit(item)}
+                                                onToggle={() =>
+                                                    openToggle(
+                                                        item,
+                                                        'bast-types',
+                                                    )
+                                                }
+                                            />
+                                        </tr>
+                                    ))}
+                                </DesktopMasterTable>
+                            </>
                         )}
 
                         {activeTab === 'departments' && (
-                            <MasterTable
-                                headers={[
-                                    'Unit / Bidang',
-                                    'Kode',
-                                    'Pengguna',
-                                    'BAST',
-                                    'Status',
-                                    'Aksi',
-                                ]}
-                                empty={filteredDepartments.length === 0}
-                            >
-                                {filteredDepartments.map((item) => (
-                                    <tr
-                                        key={item.id}
-                                        className="border-b border-[#EDF0F2] last:border-b-0"
-                                    >
-                                        <MasterNameCell
+                            <>
+                                <MobileMasterList
+                                    empty={filteredDepartments.length === 0}
+                                >
+                                    {filteredDepartments.map((item) => (
+                                        <MasterMobileCard
+                                            key={item.id}
                                             name={item.name}
                                             description={item.description}
-                                        />
-
-                                        <td className="px-5 py-4 font-mono text-xs font-medium text-[#52616D]">
-                                            {item.code}
-                                        </td>
-
-                                        <td className="px-5 py-4 text-xs text-[#657481]">
-                                            {item.users_count}
-                                        </td>
-
-                                        <td className="px-5 py-4 text-xs text-[#657481]">
-                                            {item.basts_count}
-                                        </td>
-
-                                        <StatusCell active={item.is_active} />
-
-                                        <ActionCell
                                             active={item.is_active}
+                                            details={[
+                                                {
+                                                    label: 'Kode',
+                                                    value: item.code,
+                                                    mono: true,
+                                                },
+                                                {
+                                                    label: 'Pengguna',
+                                                    value: `${item.users_count} pengguna`,
+                                                },
+                                                {
+                                                    label: 'BAST',
+                                                    value: `${item.basts_count} dokumen`,
+                                                },
+                                            ]}
                                             onEdit={() => openEdit(item)}
                                             onToggle={() =>
-                                                setToggleTarget({
-                                                    id: item.id,
-                                                    name: item.name,
-                                                    is_active: item.is_active,
-                                                    type: 'departments',
-                                                })
+                                                openToggle(item, 'departments')
                                             }
                                         />
-                                    </tr>
-                                ))}
-                            </MasterTable>
+                                    ))}
+                                </MobileMasterList>
+
+                                <DesktopMasterTable
+                                    headers={[
+                                        'Unit / Bidang',
+                                        'Kode',
+                                        'Pengguna',
+                                        'BAST',
+                                        'Status',
+                                        'Aksi',
+                                    ]}
+                                    empty={filteredDepartments.length === 0}
+                                >
+                                    {filteredDepartments.map((item) => (
+                                        <tr
+                                            key={item.id}
+                                            className="border-b border-[#EDF0F2] last:border-b-0"
+                                        >
+                                            <MasterNameCell
+                                                name={item.name}
+                                                description={item.description}
+                                            />
+
+                                            <td className="px-5 py-4 font-mono text-xs font-medium text-[#52616D]">
+                                                {item.code}
+                                            </td>
+
+                                            <td className="px-5 py-4 text-xs text-[#657481]">
+                                                {item.users_count}
+                                            </td>
+
+                                            <td className="px-5 py-4 text-xs text-[#657481]">
+                                                {item.basts_count}
+                                            </td>
+
+                                            <StatusCell
+                                                active={item.is_active}
+                                            />
+
+                                            <ActionCell
+                                                active={item.is_active}
+                                                onEdit={() => openEdit(item)}
+                                                onToggle={() =>
+                                                    openToggle(
+                                                        item,
+                                                        'departments',
+                                                    )
+                                                }
+                                            />
+                                        </tr>
+                                    ))}
+                                </DesktopMasterTable>
+                            </>
                         )}
 
                         {activeTab === 'item-categories' && (
-                            <MasterTable
-                                headers={[
-                                    'Kategori',
-                                    'Slug',
-                                    'Dipakai',
-                                    'Status',
-                                    'Aksi',
-                                ]}
-                                empty={filteredItemCategories.length === 0}
-                            >
-                                {filteredItemCategories.map((item) => (
-                                    <tr
-                                        key={item.id}
-                                        className="border-b border-[#EDF0F2] last:border-b-0"
-                                    >
-                                        <MasterNameCell
+                            <>
+                                <MobileMasterList
+                                    empty={filteredItemCategories.length === 0}
+                                >
+                                    {filteredItemCategories.map((item) => (
+                                        <MasterMobileCard
+                                            key={item.id}
                                             name={item.name}
                                             description={item.description}
-                                        />
-
-                                        <td className="px-5 py-4 font-mono text-xs text-[#71808C]">
-                                            {item.slug}
-                                        </td>
-
-                                        <td className="px-5 py-4 text-xs text-[#657481]">
-                                            {item.bast_items_count} item
-                                        </td>
-
-                                        <StatusCell active={item.is_active} />
-
-                                        <ActionCell
                                             active={item.is_active}
+                                            details={[
+                                                {
+                                                    label: 'Slug',
+                                                    value: item.slug,
+                                                    mono: true,
+                                                },
+                                                {
+                                                    label: 'Dipakai',
+                                                    value: `${item.bast_items_count} item`,
+                                                },
+                                            ]}
                                             onEdit={() => openEdit(item)}
                                             onToggle={() =>
-                                                setToggleTarget({
-                                                    id: item.id,
-                                                    name: item.name,
-                                                    is_active: item.is_active,
-                                                    type: 'item-categories',
-                                                })
+                                                openToggle(
+                                                    item,
+                                                    'item-categories',
+                                                )
                                             }
                                         />
-                                    </tr>
-                                ))}
-                            </MasterTable>
+                                    ))}
+                                </MobileMasterList>
+
+                                <DesktopMasterTable
+                                    headers={[
+                                        'Kategori',
+                                        'Slug',
+                                        'Dipakai',
+                                        'Status',
+                                        'Aksi',
+                                    ]}
+                                    empty={filteredItemCategories.length === 0}
+                                >
+                                    {filteredItemCategories.map((item) => (
+                                        <tr
+                                            key={item.id}
+                                            className="border-b border-[#EDF0F2] last:border-b-0"
+                                        >
+                                            <MasterNameCell
+                                                name={item.name}
+                                                description={item.description}
+                                            />
+
+                                            <td className="px-5 py-4 font-mono text-xs text-[#71808C]">
+                                                {item.slug}
+                                            </td>
+
+                                            <td className="px-5 py-4 text-xs text-[#657481]">
+                                                {item.bast_items_count} item
+                                            </td>
+
+                                            <StatusCell
+                                                active={item.is_active}
+                                            />
+
+                                            <ActionCell
+                                                active={item.is_active}
+                                                onEdit={() => openEdit(item)}
+                                                onToggle={() =>
+                                                    openToggle(
+                                                        item,
+                                                        'item-categories',
+                                                    )
+                                                }
+                                            />
+                                        </tr>
+                                    ))}
+                                </DesktopMasterTable>
+                            </>
                         )}
 
                         {activeTab === 'units' && (
-                            <MasterTable
-                                headers={[
-                                    'Satuan',
-                                    'Simbol',
-                                    'Dipakai',
-                                    'Status',
-                                    'Aksi',
-                                ]}
-                                empty={filteredUnits.length === 0}
-                            >
-                                {filteredUnits.map((item) => (
-                                    <tr
-                                        key={item.id}
-                                        className="border-b border-[#EDF0F2] last:border-b-0"
-                                    >
-                                        <MasterNameCell
+                            <>
+                                <MobileMasterList
+                                    empty={filteredUnits.length === 0}
+                                >
+                                    {filteredUnits.map((item) => (
+                                        <MasterMobileCard
+                                            key={item.id}
                                             name={item.name}
                                             description={item.description}
-                                        />
-
-                                        <td className="px-5 py-4 text-xs font-medium text-[#52616D]">
-                                            {item.symbol ?? '—'}
-                                        </td>
-
-                                        <td className="px-5 py-4 text-xs text-[#657481]">
-                                            {item.bast_items_count} item
-                                        </td>
-
-                                        <StatusCell active={item.is_active} />
-
-                                        <ActionCell
                                             active={item.is_active}
+                                            details={[
+                                                {
+                                                    label: 'Simbol',
+                                                    value: item.symbol ?? '—',
+                                                },
+                                                {
+                                                    label: 'Dipakai',
+                                                    value: `${item.bast_items_count} item`,
+                                                },
+                                            ]}
                                             onEdit={() => openEdit(item)}
                                             onToggle={() =>
-                                                setToggleTarget({
-                                                    id: item.id,
-                                                    name: item.name,
-                                                    is_active: item.is_active,
-                                                    type: 'units',
-                                                })
+                                                openToggle(item, 'units')
                                             }
                                         />
-                                    </tr>
-                                ))}
-                            </MasterTable>
+                                    ))}
+                                </MobileMasterList>
+
+                                <DesktopMasterTable
+                                    headers={[
+                                        'Satuan',
+                                        'Simbol',
+                                        'Dipakai',
+                                        'Status',
+                                        'Aksi',
+                                    ]}
+                                    empty={filteredUnits.length === 0}
+                                >
+                                    {filteredUnits.map((item) => (
+                                        <tr
+                                            key={item.id}
+                                            className="border-b border-[#EDF0F2] last:border-b-0"
+                                        >
+                                            <MasterNameCell
+                                                name={item.name}
+                                                description={item.description}
+                                            />
+
+                                            <td className="px-5 py-4 text-xs font-medium text-[#52616D]">
+                                                {item.symbol ?? '—'}
+                                            </td>
+
+                                            <td className="px-5 py-4 text-xs text-[#657481]">
+                                                {item.bast_items_count} item
+                                            </td>
+
+                                            <StatusCell
+                                                active={item.is_active}
+                                            />
+
+                                            <ActionCell
+                                                active={item.is_active}
+                                                onEdit={() => openEdit(item)}
+                                                onToggle={() =>
+                                                    openToggle(item, 'units')
+                                                }
+                                            />
+                                        </tr>
+                                    ))}
+                                </DesktopMasterTable>
+                            </>
                         )}
                     </section>
                 </div>
@@ -657,7 +788,7 @@ export default function MasterIndex({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[520px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[520px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             {editTarget
@@ -757,7 +888,7 @@ export default function MasterIndex({
                                 variant="outline"
                                 disabled={processing}
                                 onClick={closeForm}
-                                className="border-[#D7DEE4] bg-white text-[#52616D]"
+                                className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                             >
                                 Batal
                             </Button>
@@ -765,7 +896,7 @@ export default function MasterIndex({
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-[#1D5D8F] text-white hover:bg-[#174C76]"
+                                className="w-full bg-[#1D5D8F] text-white hover:bg-[#174C76] sm:w-auto"
                             >
                                 {processing
                                     ? 'Menyimpan...'
@@ -786,7 +917,7 @@ export default function MasterIndex({
                     }
                 }}
             >
-                <DialogContent className="bast-app border-[#DDE3E8] bg-white sm:max-w-[480px]">
+                <DialogContent className="bast-app w-[calc(100%-2rem)] border-[#DDE3E8] bg-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-[#17212B]">
                             {toggleTarget?.is_active
@@ -794,7 +925,7 @@ export default function MasterIndex({
                                 : 'Aktifkan kembali data?'}
                         </DialogTitle>
 
-                        <DialogDescription className="leading-6 text-[#71808C]">
+                        <DialogDescription className="leading-6 break-words text-[#71808C]">
                             &quot;
                             {toggleTarget?.name}
                             &quot; akan{' '}
@@ -817,7 +948,7 @@ export default function MasterIndex({
                             variant="outline"
                             disabled={toggling}
                             onClick={() => setToggleTarget(null)}
-                            className="border-[#D7DEE4] bg-white text-[#52616D]"
+                            className="w-full border-[#D7DEE4] bg-white text-[#52616D] sm:w-auto"
                         >
                             Batal
                         </Button>
@@ -826,11 +957,11 @@ export default function MasterIndex({
                             type="button"
                             disabled={toggling}
                             onClick={runToggle}
-                            className={
+                            className={`w-full sm:w-auto ${
                                 toggleTarget?.is_active
                                     ? 'bg-[#B44949] text-white hover:bg-[#9E3D3D]'
                                     : 'bg-[#287A4B] text-white hover:bg-[#21653E]'
-                            }
+                            }`}
                         >
                             {toggling
                                 ? 'Memproses...'
@@ -845,7 +976,110 @@ export default function MasterIndex({
     );
 }
 
-function MasterTable({
+function MobileMasterList({
+    empty,
+    children,
+}: {
+    empty: boolean;
+    children: React.ReactNode;
+}) {
+    if (empty) {
+        return (
+            <div className="lg:hidden">
+                <MasterEmptyState />
+            </div>
+        );
+    }
+
+    return (
+        <div className="divide-y divide-[#EDF0F2] lg:hidden">{children}</div>
+    );
+}
+
+function MasterMobileCard({
+    name,
+    description,
+    active,
+    details,
+    onEdit,
+    onToggle,
+}: {
+    name: string;
+    description: string | null;
+    active: boolean;
+    details: MobileDetail[];
+    onEdit: () => void;
+    onToggle: () => void;
+}) {
+    return (
+        <div className="min-w-0 px-4 py-4 sm:px-5">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold break-words text-[#344250]">
+                        {name}
+                    </p>
+
+                    <p className="mt-1 text-[11px] leading-5 break-words text-[#87949F]">
+                        {description ?? 'Tidak ada deskripsi'}
+                    </p>
+                </div>
+
+                <StatusBadge active={active} />
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                {details.map((detail) => (
+                    <div key={detail.label} className="min-w-0">
+                        <p className="text-[10px] font-medium text-[#929DA6] uppercase">
+                            {detail.label}
+                        </p>
+
+                        <p
+                            className={`mt-1 min-w-0 text-[11px] leading-4 break-words text-[#5F6D78] ${
+                                detail.mono ? 'font-mono' : ''
+                            }`}
+                        >
+                            {detail.value}
+                        </p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#EDF0F2] pt-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onEdit}
+                    className="h-9 w-full border-[#D7DEE4] bg-white px-2 text-xs text-[#52616D] shadow-none"
+                >
+                    <PencilLine className="size-3.5" />
+                    Edit
+                </Button>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onToggle}
+                    className={`h-9 w-full bg-white px-2 text-xs shadow-none ${
+                        active
+                            ? 'border-[#E3CACA] text-[#B44949]'
+                            : 'border-[#CFE2D7] text-[#287A4B]'
+                    }`}
+                >
+                    {active ? (
+                        <PowerOff className="size-3.5" />
+                    ) : (
+                        <Power className="size-3.5" />
+                    )}
+
+                    {active ? 'Nonaktifkan' : 'Aktifkan'}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function DesktopMasterTable({
     headers,
     empty,
     children,
@@ -856,24 +1090,14 @@ function MasterTable({
 }) {
     if (empty) {
         return (
-            <div className="flex min-h-[300px] flex-col items-center justify-center px-5 text-center">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-[#F0F4F6] text-[#87949F]">
-                    <Database className="size-5" />
-                </div>
-
-                <p className="mt-4 text-sm font-semibold text-[#46545F]">
-                    Data tidak ditemukan
-                </p>
-
-                <p className="mt-1 text-xs text-[#8B97A1]">
-                    Coba ubah kata pencarian atau tambahkan data baru.
-                </p>
+            <div className="hidden lg:block">
+                <MasterEmptyState />
             </div>
         );
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="hidden overflow-x-auto lg:block">
             <table className="w-full min-w-[820px]">
                 <thead className="bg-[#FAFBFC]">
                     <tr className="border-b border-[#E6EAED]">
@@ -898,6 +1122,24 @@ function MasterTable({
     );
 }
 
+function MasterEmptyState() {
+    return (
+        <div className="flex min-h-[300px] flex-col items-center justify-center px-5 text-center">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-[#F0F4F6] text-[#87949F]">
+                <Database className="size-5" />
+            </div>
+
+            <p className="mt-4 text-sm font-semibold text-[#46545F]">
+                Data tidak ditemukan
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-[#8B97A1]">
+                Coba ubah kata pencarian atau tambahkan data baru.
+            </p>
+        </div>
+    );
+}
+
 function MasterNameCell({
     name,
     description,
@@ -916,18 +1158,24 @@ function MasterNameCell({
     );
 }
 
+function StatusBadge({ active }: { active: boolean }) {
+    return (
+        <span
+            className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                active
+                    ? 'bg-[#EAF6EF] text-[#287A4B]'
+                    : 'bg-[#F1F3F5] text-[#71808C]'
+            }`}
+        >
+            {active ? 'Aktif' : 'Nonaktif'}
+        </span>
+    );
+}
+
 function StatusCell({ active }: { active: boolean }) {
     return (
         <td className="px-5 py-4">
-            <span
-                className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium ${
-                    active
-                        ? 'bg-[#EAF6EF] text-[#287A4B]'
-                        : 'bg-[#F1F3F5] text-[#71808C]'
-                }`}
-            >
-                {active ? 'Aktif' : 'Nonaktif'}
-            </span>
+            <StatusBadge active={active} />
         </td>
     );
 }
