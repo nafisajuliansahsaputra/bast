@@ -1,0 +1,141 @@
+name: Build InfinityFree Package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-infinityfree-package.yml'
+      - 'deploy/infinityfree/**'
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'public/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, ctype, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, tokenizer, xml, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Build frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare InfinityFree package
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TOKEN="$(openssl rand -hex 12)"
+          TOKEN_HASH="$(printf '%s' "$TOKEN" | sha256sum | awk '{print $1}')"
+
+          rm -rf dist
+          mkdir -p dist/htdocs/app-core
+          mkdir -p dist/artifact
+
+          cp -a app bootstrap config database resources routes storage vendor artisan composer.json composer.lock dist/htdocs/app-core/
+          mkdir -p dist/htdocs/app-core/storage/framework/cache
+          mkdir -p dist/htdocs/app-core/storage/framework/sessions
+          mkdir -p dist/htdocs/app-core/storage/framework/views
+          mkdir -p dist/htdocs/app-core/storage/logs
+          mkdir -p dist/htdocs/app-core/storage/app
+          mkdir -p dist/htdocs/app-core/bootstrap/cache
+
+          cp -a public/. dist/htdocs/
+          cp deploy/infinityfree/index.php dist/htdocs/index.php
+          cp deploy/infinityfree/.htaccess dist/htdocs/.htaccess
+          sed "s/__SETUP_TOKEN_HASH__/$TOKEN_HASH/g" deploy/infinityfree/install.php > dist/htdocs/install.php
+
+          rm -f dist/htdocs/hot
+          rm -rf dist/htdocs/storage
+
+          printf '%s\n' "$TOKEN" > dist/artifact/SETUP_TOKEN.txt
+
+          python3 - <<'PY'
+          import os, zipfile
+          from pathlib import Path
+
+          root = Path("dist/htdocs")
+          out = Path("dist/artifact")
+          full = out / "bast-infinityfree-upload.zip"
+
+          files = [p for p in root.rglob("*") if p.is_file()]
+
+          with zipfile.ZipFile(full, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              for p in files:
+                  z.write(p, p.relative_to(root).as_posix())
+
+          # Independent upload+extract parts, each safely below InfinityFree's 10 MB file limit.
+          limit = 7_500_000
+          part = 1
+          z = None
+          current_path = None
+
+          def open_part(n):
+              path = out / f"bast-infinityfree-part-{n:02d}.zip"
+              return path, zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9)
+
+          current_path, z = open_part(part)
+
+          for p in files:
+              arc = p.relative_to(root).as_posix()
+              z.write(p, arc)
+              if current_path.stat().st_size >= limit:
+                  z.close()
+                  part += 1
+                  current_path, z = open_part(part)
+
+          z.close()
+          if current_path.exists() and current_path.stat().st_size == 22:
+              current_path.unlink()
+
+          info = out / "DEPLOY_INFO.txt"
+          info.write_text(
+              "Upload ALL bast-infinityfree-part-XX.zip files into htdocs using Upload & Extract, in numeric order.\n"
+              "Do not upload SETUP_TOKEN.txt. Keep it locally and use its value on /install.php.\n"
+              "After successful installation, delete install.php from htdocs.\n",
+              encoding="utf-8",
+          )
+          PY
+
+          ls -lh dist/artifact
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bast-infinityfree
+          path: dist/artifact/
+          if-no-files-found: error
+          retention-days: 14
