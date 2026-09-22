@@ -1,0 +1,69 @@
+services:
+  - type: web
+    name: bast-portfolio
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: BAST
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_LOCALE
+        value: en
+      - key: APP_FALLBACK_LOCALE
+        value: en
+      - key: APP_FAKER_LOCALE
+        value: en_US
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/html/database/database.sqlite
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: SESSION_ENCRYPT
+        value: "false"
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: MAIL_MAILER
+        value: log
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@bast.local
+      - key: MAIL_FROM_NAME
+        value: BAST
+      - key: BAST_DOCUMENT_CODE
+        value: BAST
+      - key: BAST_INSTITUTION_CODE
+        value: DISKOMINFO
+      - key: BAST_SUPER_ADMIN_EMAIL
+        value: admin@bast.local
+      - key: BAST_SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: BAST_DEMO_MODE
+        value: "true"
+      - key: BAST_DEMO_EMAIL
+        value: rina.maharani@bast.local
+      - key: BAST_DEMO_READ_ONLY
+        value: "true"
+      - key: BAST_DEMO_RESET
+        value: "true"
+      - key: VITE_APP_NAME
+        value: BAST
