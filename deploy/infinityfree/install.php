@@ -178,16 +178,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input name="setup_token" required>
 
             <label>MySQL Host</label>
-            <input name="db_host" required placeholder="sqlXXX.infinityfree.com">
+            <input name="db_host" value="sql104.infinityfree.com" required>
 
             <label>MySQL Port</label>
             <input name="db_port" value="3306" required>
 
             <label>Database Name</label>
-            <input name="db_database" required>
+            <input name="db_database" value="if0_42982217_bast" required>
 
             <label>Database Username</label>
-            <input name="db_username" required>
+            <input name="db_username" value="if0_42982217" required>
 
             <label>Database Password</label>
             <input name="db_password" type="password">
