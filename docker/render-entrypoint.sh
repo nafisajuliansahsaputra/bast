@@ -6,6 +6,13 @@ cd /var/www/html
 
 PORT="${PORT:-10000}"
 
+# Render exposes the canonical public URL automatically at runtime.
+# Keep Laravel URL generation aligned with the active Render service URL
+# without hard-coding a deployment hostname into the repository.
+if [ -n "${RENDER_EXTERNAL_URL:-}" ] && [ -z "${APP_URL:-}" ]; then
+    export APP_URL="${RENDER_EXTERNAL_URL}"
+fi
+
 sed -ri "s/^Listen [0-9]+/Listen ${PORT}/" /etc/apache2/ports.conf
 sed -ri "s/<VirtualHost \*:[0-9]+>/<VirtualHost *:${PORT}>/" \
     /etc/apache2/sites-available/000-default.conf
