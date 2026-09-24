@@ -61,17 +61,25 @@ jobs:
 
           rm -rf dist
           mkdir -p dist/htdocs/app-core
+          mkdir -p dist/htdocs/app-core/public
           mkdir -p dist/artifact
 
           cp -a app bootstrap config database resources routes storage vendor artisan composer.json composer.lock dist/htdocs/app-core/
 
           mkdir -p dist/htdocs/app-core/storage/framework/cache
+          mkdir -p dist/htdocs/app-core/public
           mkdir -p dist/htdocs/app-core/storage/framework/sessions
+          mkdir -p dist/htdocs/app-core/public
           mkdir -p dist/htdocs/app-core/storage/framework/views
+          mkdir -p dist/htdocs/app-core/public
           mkdir -p dist/htdocs/app-core/storage/logs
+          mkdir -p dist/htdocs/app-core/public
           mkdir -p dist/htdocs/app-core/storage/app
+          mkdir -p dist/htdocs/app-core/public
           mkdir -p dist/htdocs/app-core/bootstrap/cache
+          mkdir -p dist/htdocs/app-core/public
           mkdir -p dist/htdocs/app-core/database
+          mkdir -p dist/htdocs/app-core/public
 
           cp -a public/. dist/htdocs/
           cp deploy/infinityfree/index.php dist/htdocs/index.php
