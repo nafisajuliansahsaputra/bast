@@ -4,10 +4,193 @@ Set-StrictMode -Version Latest
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 Set-Location $RepoRoot
 
-function Require-Command([string]$Name) {
-    if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-        throw "Command '$Name' tidak ditemukan. Pastikan $Name sudah terinstall dan masuk PATH."
+function Resolve-LaragonRoot {
+    $wwwDirectory = Split-Path $RepoRoot -Parent
+    $candidate = Split-Path $wwwDirectory -Parent
+
+    if (
+        (Split-Path $wwwDirectory -Leaf).ToLowerInvariant() -eq "www"
+        -and (Test-Path (Join-Path $candidate "bin"))
+    ) {
+        return $candidate
     }
+
+    if (Test-Path "C:\laragon\bin") {
+        return "C:\laragon"
+    }
+
+    return $null
+}
+
+function Resolve-Php([string]$LaragonRoot) {
+    $command = Get-Command "php" -ErrorAction SilentlyContinue
+
+    if ($null -ne $command) {
+        return $command.Source
+    }
+
+    if ([string]::IsNullOrWhiteSpace($LaragonRoot)) {
+        throw "PHP tidak ditemukan di PATH dan instalasi Laragon tidak terdeteksi."
+    }
+
+    $phpRoot = Join-Path $LaragonRoot "bin\php"
+
+    if (-not (Test-Path $phpRoot)) {
+        throw "Folder PHP Laragon tidak ditemukan di '$phpRoot'."
+    }
+
+    $candidates = Get-ChildItem $phpRoot -Filter "php.exe" -File -Recurse |
+        ForEach-Object {
+            $versionText = ""
+
+            try {
+                $versionText = (& $_.FullName -r "echo PHP_VERSION;" 2>$null | Out-String).Trim()
+            }
+            catch {
+                return
+            }
+
+            $match = [regex]::Match(
+                $versionText,
+                '^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)'
+            )
+
+            if (-not $match.Success) {
+                return
+            }
+
+            $version = [version]::new(
+                [int] $match.Groups["major"].Value,
+                [int] $match.Groups["minor"].Value,
+                [int] $match.Groups["patch"].Value
+            )
+
+            if ($version -lt [version]"8.3.0") {
+                return
+            }
+
+            [PSCustomObject]@{
+                Path = $_.FullName
+                Version = $version
+            }
+        } |
+        Sort-Object Version -Descending
+
+    $selected = $candidates | Select-Object -First 1
+
+    if ($null -eq $selected) {
+        throw "PHP 8.3+ tidak ditemukan di Laragon. BAST membutuhkan PHP ^8.3."
+    }
+
+    return $selected.Path
+}
+
+function Resolve-Composer(
+    [string]$LaragonRoot,
+    [string]$PhpPath
+) {
+    if (-not [string]::IsNullOrWhiteSpace($LaragonRoot)) {
+        $composerRoot = Join-Path $LaragonRoot "bin\composer"
+
+        if (Test-Path $composerRoot) {
+            $phar = Get-ChildItem $composerRoot -Filter "composer.phar" -File -Recurse |
+                Select-Object -First 1
+
+            if ($null -ne $phar) {
+                return [PSCustomObject]@{
+                    Path = $phar.FullName
+                    Mode = "phar"
+                }
+            }
+
+            $native = Get-ChildItem $composerRoot -File -Recurse |
+                Where-Object {
+                    $_.Name -in @(
+                        "composer.exe",
+                        "composer.bat",
+                        "composer.cmd"
+                    )
+                } |
+                Select-Object -First 1
+
+            if ($null -ne $native) {
+                return [PSCustomObject]@{
+                    Path = $native.FullName
+                    Mode = "native"
+                }
+            }
+        }
+    }
+
+    $command = Get-Command "composer" -ErrorAction SilentlyContinue
+
+    if ($null -ne $command) {
+        return [PSCustomObject]@{
+            Path = $command.Source
+            Mode = "native"
+        }
+    }
+
+    throw "Composer tidak ditemukan. Install Composer lewat Laragon atau composer.org."
+}
+
+function Resolve-Npm([string]$LaragonRoot) {
+    $command = Get-Command "npm" -ErrorAction SilentlyContinue
+
+    if ($null -ne $command) {
+        return $command.Source
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($LaragonRoot)) {
+        $nodeRoots = @(
+            (Join-Path $LaragonRoot "bin\nodejs"),
+            (Join-Path $LaragonRoot "bin\node")
+        )
+
+        foreach ($nodeRoot in $nodeRoots) {
+            if (-not (Test-Path $nodeRoot)) {
+                continue
+            }
+
+            $npm = Get-ChildItem $nodeRoot -File -Recurse |
+                Where-Object {
+                    $_.Name -in @(
+                        "npm.cmd",
+                        "npm.exe"
+                    )
+                } |
+                Select-Object -First 1
+
+            if ($null -ne $npm) {
+                return $npm.FullName
+            }
+        }
+    }
+
+    throw "npm tidak ditemukan. Pastikan Node.js sudah terinstall."
+}
+
+function Invoke-Composer {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$CommandArguments
+    )
+
+    if ($Composer.Mode -eq "phar") {
+        & $PhpPath $Composer.Path @CommandArguments
+    }
+    else {
+        & $Composer.Path @CommandArguments
+    }
+}
+
+function Invoke-Npm {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$CommandArguments
+    )
+
+    & $NpmPath @CommandArguments
 }
 
 function Sha256-Hex([string]$Text) {
@@ -33,29 +216,38 @@ function New-AppKey {
     return "base64:" + [Convert]::ToBase64String($buffer)
 }
 
-Require-Command "php"
-Require-Command "composer"
-Require-Command "npm"
+$LaragonRoot = Resolve-LaragonRoot
+$PhpPath = Resolve-Php $LaragonRoot
 
-& php -r "exit(extension_loaded('pdo_sqlite') ? 0 : 1);"
+$env:Path = "$(Split-Path $PhpPath -Parent);$env:Path"
+
+$Composer = Resolve-Composer $LaragonRoot $PhpPath
+$NpmPath = Resolve-Npm $LaragonRoot
+
+$PhpVersion = (& $PhpPath -r "echo PHP_VERSION;" | Out-String).Trim()
+
+& $PhpPath -r "exit(extension_loaded('pdo_sqlite') ? 0 : 1);"
 if ($LASTEXITCODE -ne 0) {
-    throw "PHP pdo_sqlite extension tidak aktif. Aktifkan extension pdo_sqlite di PHP yang dipakai builder."
+    throw "PHP pdo_sqlite extension tidak aktif pada '$PhpPath'. Aktifkan extension pdo_sqlite di PHP Laragon."
 }
 
 Write-Host ""
 Write-Host "=== BAST InfinityFree local builder ===" -ForegroundColor Cyan
 Write-Host "Repo: $RepoRoot"
+Write-Host "PHP: $PhpPath ($PhpVersion)"
+Write-Host "Composer: $($Composer.Path)"
+Write-Host "npm: $NpmPath"
 Write-Host ""
 
 Write-Host "[1/6] Installing production PHP dependencies..." -ForegroundColor Yellow
-composer install --no-dev --prefer-dist --no-interaction --no-progress
+Invoke-Composer install --no-dev --prefer-dist --no-interaction --no-progress
 if ($LASTEXITCODE -ne 0) { throw "composer install gagal." }
 
 Write-Host "[2/6] Building frontend..." -ForegroundColor Yellow
-npm ci
+Invoke-Npm ci
 if ($LASTEXITCODE -ne 0) { throw "npm ci gagal." }
 
-npm run build
+Invoke-Npm run build
 if ($LASTEXITCODE -ne 0) { throw "npm run build gagal." }
 
 Write-Host "[3/6] Preparing InfinityFree htdocs..." -ForegroundColor Yellow
@@ -139,7 +331,7 @@ $env:BAST_DEMO_RESET = "false"
 
 Push-Location $Core
 try {
-    & php artisan migrate:fresh --seed --force
+    & $PhpPath artisan migrate:fresh --seed --force
     if ($LASTEXITCODE -ne 0) {
         throw "Pembuatan database demo SQLite gagal."
     }
