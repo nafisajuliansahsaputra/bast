@@ -26,17 +26,7 @@ function Resolve-Php([string]$LaragonRoot) {
     $command = Get-Command "php" -ErrorAction SilentlyContinue
 
     if ($null -ne $command) {
-        $source = $command.Source
-
-        if ($source.ToLowerInvariant().EndsWith("npm.ps1")) {
-            $npmCmd = Join-Path (Split-Path $source -Parent) "npm.cmd"
-
-            if (Test-Path $npmCmd) {
-                return $npmCmd
-            }
-        }
-
-        return $source
+        return $command.Source
     }
 
     if ([string]::IsNullOrWhiteSpace($LaragonRoot)) {
@@ -149,7 +139,17 @@ function Resolve-Npm([string]$LaragonRoot) {
     $command = Get-Command "npm" -ErrorAction SilentlyContinue
 
     if ($null -ne $command) {
-        return $command.Source
+        $source = $command.Source
+
+        if ($source.ToLowerInvariant().EndsWith("npm.ps1")) {
+            $npmCmd = Join-Path (Split-Path $source -Parent) "npm.cmd"
+
+            if (Test-Path $npmCmd) {
+                return $npmCmd
+            }
+        }
+
+        return $source
     }
 
     if (-not [string]::IsNullOrWhiteSpace($LaragonRoot)) {
