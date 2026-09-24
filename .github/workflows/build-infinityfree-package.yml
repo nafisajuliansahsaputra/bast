@@ -28,20 +28,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: bast_build
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -50,7 +36,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: bcmath, ctype, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, tokenizer, xml, zip
+          extensions: bcmath, ctype, fileinfo, gd, intl, mbstring, openssl, pdo_sqlite, tokenizer, xml, zip
           tools: composer:v2
           coverage: none
 
@@ -68,27 +54,50 @@ jobs:
           npm ci
           npm run build
 
-      - name: Install MySQL client
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y default-mysql-client
-
-      - name: Build demo database
+      - name: Prepare InfinityFree package
         shell: bash
         run: |
           set -euo pipefail
+
+          rm -rf dist
+          mkdir -p dist/htdocs/app-core
+          mkdir -p dist/artifact
+
+          cp -a app bootstrap config database resources routes storage vendor artisan composer.json composer.lock dist/htdocs/app-core/
+
+          mkdir -p dist/htdocs/app-core/storage/framework/cache
+          mkdir -p dist/htdocs/app-core/storage/framework/sessions
+          mkdir -p dist/htdocs/app-core/storage/framework/views
+          mkdir -p dist/htdocs/app-core/storage/logs
+          mkdir -p dist/htdocs/app-core/storage/app
+          mkdir -p dist/htdocs/app-core/bootstrap/cache
+          mkdir -p dist/htdocs/app-core/database
+
+          cp -a public/. dist/htdocs/
+          cp deploy/infinityfree/index.php dist/htdocs/index.php
+          cp deploy/infinityfree/.htaccess dist/htdocs/.htaccess
+
+          rm -f dist/htdocs/hot
+          rm -rf dist/htdocs/storage
+
+      - name: Seed packaged SQLite demo database
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DB_PATH="$(pwd)/dist/htdocs/app-core/database/database.sqlite"
+          rm -f "$DB_PATH"
+          touch "$DB_PATH"
 
           export APP_NAME=BAST
           export APP_ENV=production
           export APP_KEY="base64:$(openssl rand -base64 32 | tr -d '\n')"
           export APP_DEBUG=false
           export APP_URL=http://localhost
-          export DB_CONNECTION=mysql
-          export DB_HOST=127.0.0.1
-          export DB_PORT=3306
-          export DB_DATABASE=bast_build
-          export DB_USERNAME=root
-          export DB_PASSWORD=root
+          export LOG_CHANNEL=single
+          export LOG_LEVEL=error
+          export DB_CONNECTION=sqlite
+          export DB_DATABASE="$DB_PATH"
           export SESSION_DRIVER=file
           export CACHE_STORE=file
           export QUEUE_CONNECTION=sync
@@ -98,22 +107,16 @@ jobs:
           export BAST_DEMO_MODE=true
           export BAST_DEMO_EMAIL=rina.maharani@bast.local
           export BAST_DEMO_READ_ONLY=true
+          export BAST_DEMO_RESET=false
 
-          php artisan migrate:fresh --seed --force
-          php artisan optimize:clear
+          (
+            cd dist/htdocs/app-core
+            php artisan migrate:fresh --seed --force
+          )
 
-          mkdir -p dist/artifact
-          mysqldump \
-            --host=127.0.0.1 \
-            --port=3306 \
-            --user=root \
-            --password=root \
-            --single-transaction \
-            --skip-lock-tables \
-            --default-character-set=utf8mb4 \
-            bast_build > dist/artifact/bast-infinityfree.sql
+          test -s "$DB_PATH"
 
-      - name: Prepare InfinityFree package
+      - name: Create installer
         shell: bash
         run: |
           set -euo pipefail
@@ -121,40 +124,25 @@ jobs:
           TOKEN="$(openssl rand -hex 12)"
           TOKEN_HASH="$(printf '%s' "$TOKEN" | sha256sum | awk '{print $1}')"
 
-          mkdir -p dist/htdocs/app-core
-
-          cp -a app bootstrap config database resources routes storage vendor artisan composer.json composer.lock dist/htdocs/app-core/
-          mkdir -p dist/htdocs/app-core/storage/framework/cache
-          mkdir -p dist/htdocs/app-core/storage/framework/sessions
-          mkdir -p dist/htdocs/app-core/storage/framework/views
-          mkdir -p dist/htdocs/app-core/storage/logs
-          mkdir -p dist/htdocs/app-core/storage/app
-          mkdir -p dist/htdocs/app-core/bootstrap/cache
-
-          cp -a public/. dist/htdocs/
-          cp deploy/infinityfree/index.php dist/htdocs/index.php
-          cp deploy/infinityfree/.htaccess dist/htdocs/.htaccess
           sed "s/__SETUP_TOKEN_HASH__/$TOKEN_HASH/g" deploy/infinityfree/install.php > dist/htdocs/install.php
-
-          rm -f dist/htdocs/hot
-          rm -rf dist/htdocs/storage
-
           printf '%s\n' "$TOKEN" > dist/artifact/SETUP_TOKEN.txt
 
           cat > dist/artifact/DEPLOY_INFO.txt <<'EOF'
           BAST - InfinityFree deployment
 
-          1. Buat hosting account dan MySQL database di InfinityFree.
-          2. Buka phpMyAdmin database tersebut, lalu import bast-infinityfree.sql.
-          3. Upload SEMUA isi folder htdocs/ ke folder htdocs hosting menggunakan FileZilla/FTP.
-          4. Buka https://DOMAIN-KAMU/install.php.
-          5. Isi Setup Token dari SETUP_TOKEN.txt, credential MySQL InfinityFree, serta email/password Super Admin yang kamu inginkan.
-          6. Setelah installer sukses, HAPUS install.php dari htdocs.
-          7. Jangan pernah upload SETUP_TOKEN.txt ke hosting.
+          Package ini sudah membawa database demo SQLite dan lampiran demo.
+          Tidak perlu membuat/import MySQL database.
+
+          1. Upload SEMUA isi folder htdocs/ ke folder htdocs hosting menggunakan FileZilla/FTP.
+          2. Buka https://DOMAIN-KAMU/install.php.
+          3. Isi Setup Token dari SETUP_TOKEN.txt serta email/password Super Admin yang kamu inginkan.
+          4. Setelah installer sukses, HAPUS install.php dari htdocs.
+          5. Jangan pernah upload SETUP_TOKEN.txt ke hosting.
 
           Catatan:
           - Session/cache menggunakan file dan queue menggunakan sync agar kompatibel dengan free hosting.
-          - Database sudah berisi data demo dan file lampiran demo ikut berada di app-core/storage.
+          - Database ada di app-core/database/database.sqlite.
+          - Jangan overwrite database.sqlite saat update aplikasi kalau ingin mempertahankan data.
           EOF
 
       - name: Validate InfinityFree file limits
