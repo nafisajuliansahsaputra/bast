@@ -111,7 +111,7 @@ jobs:
 
           (
             cd dist/htdocs/app-core
-            php artisan migrate:fresh --seed --force
+            php artisan migrate --seed --force
           )
 
           test -s "$DB_PATH"
