@@ -26,7 +26,17 @@ function Resolve-Php([string]$LaragonRoot) {
     $command = Get-Command "php" -ErrorAction SilentlyContinue
 
     if ($null -ne $command) {
-        return $command.Source
+        $source = $command.Source
+
+        if ($source.ToLowerInvariant().EndsWith("npm.ps1")) {
+            $npmCmd = Join-Path (Split-Path $source -Parent) "npm.cmd"
+
+            if (Test-Path $npmCmd) {
+                return $npmCmd
+            }
+        }
+
+        return $source
     }
 
     if ([string]::IsNullOrWhiteSpace($LaragonRoot)) {
@@ -64,7 +74,7 @@ function Resolve-Php([string]$LaragonRoot) {
                 $match.Groups["minor"].Value,
                 $match.Groups["patch"].Value
             )
-            $version = New-Object System.Version($versionTextNormalized)
+            $version = [version]$versionTextNormalized
 
             if ($version -lt [version]"8.3.0") {
                 return
@@ -252,14 +262,21 @@ Write-Host "npm: $NpmPath"
 Write-Host ""
 
 Write-Host "[1/6] Installing production PHP dependencies..." -ForegroundColor Yellow
-Invoke-Composer install --no-dev --prefer-dist --no-interaction --no-progress
+$ComposerInstallArgs = @(
+    "install",
+    "--no-dev",
+    "--prefer-dist",
+    "--no-interaction",
+    "--no-progress"
+)
+Invoke-Composer -CommandArguments $ComposerInstallArgs
 if ($LASTEXITCODE -ne 0) { throw "composer install gagal." }
 
 Write-Host "[2/6] Building frontend..." -ForegroundColor Yellow
-Invoke-Npm ci
+Invoke-Npm -CommandArguments @("ci")
 if ($LASTEXITCODE -ne 0) { throw "npm ci gagal." }
 
-Invoke-Npm run build
+Invoke-Npm -CommandArguments @("run", "build")
 if ($LASTEXITCODE -ne 0) { throw "npm run build gagal." }
 
 Write-Host "[3/6] Preparing InfinityFree htdocs..." -ForegroundColor Yellow
