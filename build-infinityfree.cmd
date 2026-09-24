@@ -13,7 +13,8 @@ if not "%EXIT_CODE%"=="0" (
   echo Build FAILED with exit code %EXIT_CODE%.
   echo Kirim screenshot error-nya ke ChatGPT.
 ) else (
-  echo Build selesai. Buka folder dist\artifact.
+  echo Build selesai. Folder siap upload ada di dist\htdocs.
+  echo Token installer ada di dist\artifact\SETUP_TOKEN.txt.
 )
 echo.
 pause

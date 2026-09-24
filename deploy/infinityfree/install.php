@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dbName = trim((string) ($_POST['db_database'] ?? ''));
         $dbUser = trim((string) ($_POST['db_username'] ?? ''));
         $dbPass = (string) ($_POST['db_password'] ?? '');
-        $adminEmail = trim((string) ($_POST['admin_email'] ?? 'admin@bast.local'));
+        $adminEmail = trim((string) ($_POST['admin_email'] ?? ''));
         $adminPassword = (string) ($_POST['admin_password'] ?? '');
 
         if (
@@ -58,12 +58,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
 
+        if (filter_var($adminEmail, FILTER_VALIDATE_EMAIL) === false) {
+            throw new RuntimeException('Format email Super Admin tidak valid.');
+        }
+
         $scheme = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             ? 'https'
             : 'http';
 
-        $host = (string) ($_SERVER['HTTP_HOST'] ?? 'bast.site.je');
-        $appUrl = $scheme.'://'.$host;
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+        $appUrl = $host !== ''
+            ? $scheme.'://'.$host
+            : 'http://localhost';
+
         $appKey = 'base64:'.base64_encode(random_bytes(32));
 
         $env = implode("\n", [
@@ -86,12 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'DB_USERNAME='.envQuote($dbUser),
             'DB_PASSWORD='.envQuote($dbPass),
             '',
-            'SESSION_DRIVER=database',
+            'SESSION_DRIVER=file',
             'SESSION_LIFETIME=120',
             'SESSION_ENCRYPT=false',
             'SESSION_SECURE_COOKIE=true',
-            'CACHE_STORE=database',
-            'QUEUE_CONNECTION=database',
+            'CACHE_STORE=file',
+            'QUEUE_CONNECTION=sync',
             'FILESYSTEM_DISK=local',
             '',
             'MAIL_MAILER=log',
@@ -101,11 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'BAST_DOCUMENT_CODE=BAST',
             'BAST_INSTITUTION_CODE=DISKOMINFO',
             'BAST_SUPER_ADMIN_EMAIL='.envQuote($adminEmail),
-            'BAST_SUPER_ADMIN_PASSWORD='.envQuote($adminPassword),
             'BAST_DEMO_MODE=true',
             'BAST_DEMO_EMAIL=rina.maharani@bast.local',
             'BAST_DEMO_READ_ONLY=true',
-            'BAST_DEMO_RESET=false',
             '',
             'VITE_APP_NAME=BAST',
             '',
@@ -122,21 +127,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $app->usePublicPath(__DIR__);
         $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-        \Illuminate\Support\Facades\Artisan::call('config:clear');
-        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', [
-            '--seed' => true,
-            '--force' => true,
-        ]);
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+
+        foreach (['roles', 'users', 'basts', 'migrations'] as $requiredTable) {
+            if (! \Illuminate\Support\Facades\Schema::hasTable($requiredTable)) {
+                throw new RuntimeException(
+                    'Database belum berisi data BAST. Import bast-infinityfree.sql lewat phpMyAdmin terlebih dahulu.',
+                );
+            }
+        }
+
+        $superAdminRole = \App\Models\Role::query()
+            ->where('slug', 'super-admin')
+            ->first();
+
+        if (! $superAdminRole instanceof \App\Models\Role) {
+            throw new RuntimeException(
+                'Role Super Admin tidak ditemukan. Pastikan SQL BAST sudah di-import dengan benar.',
+            );
+        }
+
+        $superAdmin = \App\Models\User::query()
+            ->where('role_id', $superAdminRole->id)
+            ->first();
+
+        if (! $superAdmin instanceof \App\Models\User) {
+            throw new RuntimeException(
+                'Akun Super Admin tidak ditemukan. Pastikan SQL BAST sudah di-import dengan benar.',
+            );
+        }
+
+        $emailAlreadyUsed = \App\Models\User::query()
+            ->where('email', $adminEmail)
+            ->whereKeyNot($superAdmin->getKey())
+            ->exists();
+
+        if ($emailAlreadyUsed) {
+            throw new RuntimeException(
+                'Email Super Admin tersebut sudah dipakai akun lain.',
+            );
+        }
+
+        $superAdmin->forceFill([
+            'email' => $adminEmail,
+            'email_verified_at' => now(),
+            'password' => \Illuminate\Support\Facades\Hash::make(
+                $adminPassword,
+            ),
+        ])->save();
 
         if (! is_dir(dirname($lockPath))) {
             mkdir(dirname($lockPath), 0755, true);
         }
 
-        file_put_contents(
-            $lockPath,
-            'Installed at '.date(DATE_ATOM)."\n",
-            LOCK_EX,
-        );
+        if (
+            file_put_contents(
+                $lockPath,
+                'Installed at '.date(DATE_ATOM)."\n",
+                LOCK_EX,
+            ) === false
+        ) {
+            throw new RuntimeException(
+                'BAST sudah terhubung, tetapi gagal membuat installer lock.',
+            );
+        }
 
         $success = 'BAST berhasil dikonfigurasi. Hapus install.php dari htdocs, lalu buka halaman utama.';
     } catch (Throwable $exception) {
@@ -164,7 +218,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <main>
     <h1>BAST Setup</h1>
-    <p>Isi credential MySQL dari InfinityFree. Installer akan membuat APP_KEY, menjalankan migration, dan memasukkan data demo.</p>
+    <p>
+        Import <strong>bast-infinityfree.sql</strong> lewat phpMyAdmin terlebih dahulu.
+        Setelah itu isi credential MySQL InfinityFree di bawah. Installer hanya
+        menghubungkan aplikasi ke database dan mengatur akun Super Admin.
+    </p>
 
     <?php if ($error !== null): ?>
         <div class="msg err"><?= h($error) ?></div>
@@ -178,27 +236,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input name="setup_token" required>
 
             <label>MySQL Host</label>
-            <input name="db_host" value="sql104.infinityfree.com" required>
+            <input name="db_host" placeholder="sqlXXX.infinityfree.com" required>
 
             <label>MySQL Port</label>
             <input name="db_port" value="3306" required>
 
             <label>Database Name</label>
-            <input name="db_database" value="if0_42982217_bast" required>
+            <input name="db_database" placeholder="if0_XXXXXXXX_bast" required>
 
             <label>Database Username</label>
-            <input name="db_username" value="if0_42982217" required>
+            <input name="db_username" placeholder="if0_XXXXXXXX" required>
 
             <label>Database Password</label>
             <input name="db_password" type="password">
 
             <label>Super Admin Email</label>
-            <input name="admin_email" type="email" value="admin@bast.local" required>
+            <input name="admin_email" type="email" required>
 
             <label>Super Admin Password</label>
             <input name="admin_password" type="password" minlength="8" required>
 
-            <button type="submit">Install BAST</button>
+            <button type="submit">Hubungkan BAST</button>
         </form>
     <?php endif; ?>
 </main>

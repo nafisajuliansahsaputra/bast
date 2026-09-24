@@ -13,6 +13,7 @@ on:
       - 'public/**'
       - 'resources/**'
       - 'routes/**'
+      - 'storage/**'
       - 'composer.json'
       - 'composer.lock'
       - 'package.json'
@@ -26,8 +27,24 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: bast_build
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -38,10 +55,10 @@ jobs:
           coverage: none
 
       - name: Install PHP dependencies
-        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -51,8 +68,52 @@ jobs:
           npm ci
           npm run build
 
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y default-mysql-client
+
+      - name: Build demo database
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export APP_NAME=BAST
+          export APP_ENV=production
+          export APP_KEY="base64:$(openssl rand -base64 32 | tr -d '\n')"
+          export APP_DEBUG=false
+          export APP_URL=http://localhost
+          export DB_CONNECTION=mysql
+          export DB_HOST=127.0.0.1
+          export DB_PORT=3306
+          export DB_DATABASE=bast_build
+          export DB_USERNAME=root
+          export DB_PASSWORD=root
+          export SESSION_DRIVER=file
+          export CACHE_STORE=file
+          export QUEUE_CONNECTION=sync
+          export FILESYSTEM_DISK=local
+          export BAST_SUPER_ADMIN_EMAIL=admin@bast.local
+          export BAST_SUPER_ADMIN_PASSWORD="$(openssl rand -hex 24)"
+          export BAST_DEMO_MODE=true
+          export BAST_DEMO_EMAIL=rina.maharani@bast.local
+          export BAST_DEMO_READ_ONLY=true
+
+          php artisan migrate:fresh --seed --force
+          php artisan optimize:clear
+
+          mkdir -p dist/artifact
+          mysqldump \
+            --host=127.0.0.1 \
+            --port=3306 \
+            --user=root \
+            --password=root \
+            --single-transaction \
+            --skip-lock-tables \
+            --default-character-set=utf8mb4 \
+            bast_build > dist/artifact/bast-infinityfree.sql
+
       - name: Prepare InfinityFree package
-        id: pack
         shell: bash
         run: |
           set -euo pipefail
@@ -60,9 +121,7 @@ jobs:
           TOKEN="$(openssl rand -hex 12)"
           TOKEN_HASH="$(printf '%s' "$TOKEN" | sha256sum | awk '{print $1}')"
 
-          rm -rf dist
           mkdir -p dist/htdocs/app-core
-          mkdir -p dist/artifact
 
           cp -a app bootstrap config database resources routes storage vendor artisan composer.json composer.lock dist/htdocs/app-core/
           mkdir -p dist/htdocs/app-core/storage/framework/cache
@@ -82,60 +141,65 @@ jobs:
 
           printf '%s\n' "$TOKEN" > dist/artifact/SETUP_TOKEN.txt
 
+          cat > dist/artifact/DEPLOY_INFO.txt <<'EOF'
+          BAST - InfinityFree deployment
+
+          1. Buat hosting account dan MySQL database di InfinityFree.
+          2. Buka phpMyAdmin database tersebut, lalu import bast-infinityfree.sql.
+          3. Upload SEMUA isi folder htdocs/ ke folder htdocs hosting menggunakan FileZilla/FTP.
+          4. Buka https://DOMAIN-KAMU/install.php.
+          5. Isi Setup Token dari SETUP_TOKEN.txt, credential MySQL InfinityFree, serta email/password Super Admin yang kamu inginkan.
+          6. Setelah installer sukses, HAPUS install.php dari htdocs.
+          7. Jangan pernah upload SETUP_TOKEN.txt ke hosting.
+
+          Catatan:
+          - Session/cache menggunakan file dan queue menggunakan sync agar kompatibel dengan free hosting.
+          - Database sudah berisi data demo dan file lampiran demo ikut berada di app-core/storage.
+          EOF
+
+      - name: Validate InfinityFree file limits
+        shell: bash
+        run: |
           python3 - <<'PY'
-          import os, zipfile
           from pathlib import Path
+          import sys
 
           root = Path("dist/htdocs")
-          out = Path("dist/artifact")
-          full = out / "bast-infinityfree-upload.zip"
+          violations = []
+
+          for path in root.rglob("*"):
+              if not path.is_file():
+                  continue
+
+              size = path.stat().st_size
+              name = path.name.lower()
+              suffix = path.suffix.lower()
+
+              if name == ".htaccess":
+                  limit = 10 * 1024
+              elif suffix in {".php", ".html", ".htm", ".js"}:
+                  limit = 1024 * 1024
+              else:
+                  limit = 10 * 1024 * 1024
+
+              if size > limit:
+                  violations.append((path, size, limit))
+
+          if violations:
+              print("InfinityFree file-size limit violations:")
+              for path, size, limit in violations:
+                  print(f"- {path}: {size} bytes > {limit} bytes")
+              sys.exit(1)
 
           files = [p for p in root.rglob("*") if p.is_file()]
-
-          with zipfile.ZipFile(full, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-              for p in files:
-                  z.write(p, p.relative_to(root).as_posix())
-
-          # Independent upload+extract parts, each safely below InfinityFree's 10 MB file limit.
-          limit = 7_500_000
-          part = 1
-          z = None
-          current_path = None
-
-          def open_part(n):
-              path = out / f"bast-infinityfree-part-{n:02d}.zip"
-              return path, zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9)
-
-          current_path, z = open_part(part)
-
-          for p in files:
-              arc = p.relative_to(root).as_posix()
-              z.write(p, arc)
-              if current_path.stat().st_size >= limit:
-                  z.close()
-                  part += 1
-                  current_path, z = open_part(part)
-
-          z.close()
-          if current_path.exists() and current_path.stat().st_size == 22:
-              current_path.unlink()
-
-          info = out / "DEPLOY_INFO.txt"
-          info.write_text(
-              "Upload ALL bast-infinityfree-part-XX.zip files into htdocs using Upload & Extract, in numeric order.\n"
-              "Do not upload SETUP_TOKEN.txt. Keep it locally and use its value on /install.php.\n"
-              "After successful installation, delete install.php from htdocs.\n",
-              encoding="utf-8",
-          )
+          total = sum(p.stat().st_size for p in files)
+          print(f"Validated {len(files)} files ({total / 1024 / 1024:.2f} MiB).")
           PY
 
-          ls -lh dist/artifact
-          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
-
       - name: Upload deployment artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bast-infinityfree
-          path: dist/artifact/
+          path: dist/
           if-no-files-found: error
           retention-days: 14

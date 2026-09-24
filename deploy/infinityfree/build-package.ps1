@@ -36,18 +36,22 @@ Write-Host "=== BAST InfinityFree local builder ===" -ForegroundColor Cyan
 Write-Host "Repo: $RepoRoot"
 Write-Host ""
 
-Write-Host "[1/4] Installing production PHP dependencies..." -ForegroundColor Yellow
-composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+Write-Host "[1/5] Installing production PHP dependencies..." -ForegroundColor Yellow
+composer install --no-dev --prefer-dist --no-interaction --no-progress
 if ($LASTEXITCODE -ne 0) { throw "composer install gagal." }
 
-Write-Host "[2/4] Installing Node dependencies and building frontend..." -ForegroundColor Yellow
+Write-Host "[2/5] Building frontend..." -ForegroundColor Yellow
 npm ci
 if ($LASTEXITCODE -ne 0) { throw "npm ci gagal." }
 
 npm run build
 if ($LASTEXITCODE -ne 0) { throw "npm run build gagal." }
 
-Write-Host "[3/4] Preparing InfinityFree package..." -ForegroundColor Yellow
+Write-Host "[3/5] Clearing Laravel caches..." -ForegroundColor Yellow
+php artisan optimize:clear
+if ($LASTEXITCODE -ne 0) { throw "php artisan optimize:clear gagal." }
+
+Write-Host "[4/5] Preparing InfinityFree htdocs..." -ForegroundColor Yellow
 
 $Dist = Join-Path $RepoRoot "dist"
 $Htdocs = Join-Path $Dist "htdocs"
@@ -82,7 +86,6 @@ foreach ($relative in $RequiredDirs) {
     New-Item -ItemType Directory -Force -Path (Join-Path $Core $relative) | Out-Null
 }
 
-# Copy all public files, including dotfiles.
 Get-ChildItem (Join-Path $RepoRoot "public") -Force | ForEach-Object {
     Copy-Item $_.FullName $Htdocs -Recurse -Force
 }
@@ -112,76 +115,48 @@ if (Test-Path $PublicStorage) { Remove-Item $PublicStorage -Recurse -Force }
     (New-Object System.Text.UTF8Encoding($false))
 )
 
-Write-Host "[4/4] Creating upload ZIP parts..." -ForegroundColor Yellow
-Add-Type -AssemblyName System.IO.Compression
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+Write-Host "[5/5] Validating InfinityFree file limits..." -ForegroundColor Yellow
 
-# Group by uncompressed size so every archive stays comfortably below InfinityFree's upload limit.
-$MaxUncompressedPerPart = 6MB
-$Files = Get-ChildItem $Htdocs -Recurse -Force -File | Sort-Object FullName
+$Violations = @()
+Get-ChildItem $Htdocs -Recurse -Force -File | ForEach-Object {
+    $file = $_
+    $name = $file.Name.ToLowerInvariant()
+    $extension = $file.Extension.ToLowerInvariant()
 
-$groups = New-Object System.Collections.Generic.List[object]
-$current = New-Object System.Collections.Generic.List[object]
-$currentBytes = [int64]0
-
-foreach ($file in $Files) {
-    if ($current.Count -gt 0 -and ($currentBytes + $file.Length) -gt $MaxUncompressedPerPart) {
-        $groups.Add(@($current))
-        $current = New-Object System.Collections.Generic.List[object]
-        $currentBytes = 0
+    if ($name -eq ".htaccess") {
+        $limit = 10KB
+    }
+    elseif ($extension -in @(".php", ".html", ".htm", ".js")) {
+        $limit = 1MB
+    }
+    else {
+        $limit = 10MB
     }
 
-    $current.Add($file)
-    $currentBytes += $file.Length
-}
-if ($current.Count -gt 0) {
-    $groups.Add(@($current))
+    if ($file.Length -gt $limit) {
+        $Violations += "$($file.FullName) - $($file.Length) bytes > $limit bytes"
+    }
 }
 
-$part = 1
-foreach ($group in $groups) {
-    $zipPath = Join-Path $Artifact ("bast-infinityfree-part-{0:D2}.zip" -f $part)
-    $stream = [System.IO.File]::Open($zipPath, [System.IO.FileMode]::Create)
-    try {
-        $zip = New-Object System.IO.Compression.ZipArchive(
-            $stream,
-            [System.IO.Compression.ZipArchiveMode]::Create,
-            $false
-        )
-        try {
-            foreach ($file in $group) {
-                $relative = $file.FullName.Substring($Htdocs.Length).TrimStart("\", "/").Replace("\", "/")
-                [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-                    $zip,
-                    $file.FullName,
-                    $relative,
-                    [System.IO.Compression.CompressionLevel]::Optimal
-                ) | Out-Null
-            }
-        }
-        finally {
-            $zip.Dispose()
-        }
-    }
-    finally {
-        $stream.Dispose()
-    }
-
-    $sizeMb = [math]::Round((Get-Item $zipPath).Length / 1MB, 2)
-    Write-Host ("  Created {0} ({1} MB)" -f (Split-Path $zipPath -Leaf), $sizeMb)
-    $part++
+if ($Violations.Count -gt 0) {
+    Write-Host "File yang melewati limit InfinityFree:" -ForegroundColor Red
+    $Violations | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    throw "Package tidak lolos file-size check InfinityFree."
 }
 
 $Info = @"
-BAST InfinityFree deployment package
+BAST InfinityFree local package
 
-1. Upload ALL bast-infinityfree-part-XX.zip files into htdocs using Upload & Extract, in numeric order.
-2. Do NOT upload SETUP_TOKEN.txt.
-3. Open https://bast.site.je/install.php after all parts are extracted.
-4. Use the token from SETUP_TOKEN.txt.
-5. After installation succeeds, delete install.php from htdocs.
+Folder siap upload:
+  dist\htdocs\
 
-Database fields are already prefilled except the MySQL password.
+1. Gunakan FileZilla/FTP untuk upload SEMUA isi dist\htdocs ke htdocs InfinityFree.
+2. Database SQL demo tidak dibuat oleh local builder ini agar database lokal kamu tidak disentuh.
+3. Cara paling aman: gunakan artifact dari GitHub Actions "Build InfinityFree Package"; artifact itu menyertakan bast-infinityfree.sql.
+4. Import SQL melalui phpMyAdmin sebelum membuka /install.php.
+5. Gunakan token dari dist\artifact\SETUP_TOKEN.txt.
+6. Setelah instalasi sukses, hapus install.php dari hosting.
+7. Jangan upload SETUP_TOKEN.txt.
 "@
 
 [System.IO.File]::WriteAllText(
@@ -192,7 +167,7 @@ Database fields are already prefilled except the MySQL password.
 
 Write-Host ""
 Write-Host "DONE." -ForegroundColor Green
-Write-Host "Output folder:"
-Write-Host "  $Artifact" -ForegroundColor Cyan
+Write-Host "Upload folder:"
+Write-Host "  $Htdocs" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "IMPORTANT: SETUP_TOKEN.txt is secret. Keep it on your PC and never upload it to htdocs." -ForegroundColor Yellow
+Write-Host "IMPORTANT: SETUP_TOKEN.txt adalah rahasia dan jangan pernah di-upload." -ForegroundColor Yellow
