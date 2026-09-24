@@ -309,7 +309,8 @@ $RequiredDirs = @(
     "storage\logs",
     "storage\app",
     "bootstrap\cache",
-    "database"
+    "database",
+    "public"
 )
 foreach ($relative in $RequiredDirs) {
     New-Item -ItemType Directory -Force -Path (Join-Path $Core $relative) | Out-Null
