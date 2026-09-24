@@ -8,10 +8,10 @@ function Resolve-LaragonRoot {
     $wwwDirectory = Split-Path $RepoRoot -Parent
     $candidate = Split-Path $wwwDirectory -Parent
 
-    if (
-        (Split-Path $wwwDirectory -Leaf).ToLowerInvariant() -eq "www"
-        -and (Test-Path (Join-Path $candidate "bin"))
-    ) {
+    $isLaragonWww = (Split-Path $wwwDirectory -Leaf).ToLowerInvariant() -eq "www"
+    $hasLaragonBin = Test-Path (Join-Path $candidate "bin")
+
+    if ($isLaragonWww -and $hasLaragonBin) {
         return $candidate
     }
 
@@ -59,11 +59,12 @@ function Resolve-Php([string]$LaragonRoot) {
                 return
             }
 
-            $version = [version]::new(
-                [int] $match.Groups["major"].Value,
-                [int] $match.Groups["minor"].Value,
-                [int] $match.Groups["patch"].Value
+            $versionTextNormalized = "{0}.{1}.{2}" -f @(
+                $match.Groups["major"].Value,
+                $match.Groups["minor"].Value,
+                $match.Groups["patch"].Value
             )
+            $version = New-Object System.Version($versionTextNormalized)
 
             if ($version -lt [version]"8.3.0") {
                 return
@@ -204,15 +205,26 @@ function Sha256-Hex([string]$Text) {
     }
 }
 
+function Fill-RandomBytes([byte[]]$Buffer) {
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+
+    try {
+        $rng.GetBytes($Buffer)
+    }
+    finally {
+        $rng.Dispose()
+    }
+}
+
 function New-RandomToken([int]$Bytes = 12) {
     $buffer = New-Object byte[] $Bytes
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($buffer)
+    Fill-RandomBytes $buffer
     return ([System.BitConverter]::ToString($buffer)).Replace("-", "").ToLowerInvariant()
 }
 
 function New-AppKey {
     $buffer = New-Object byte[] 32
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($buffer)
+    Fill-RandomBytes $buffer
     return "base64:" + [Convert]::ToBase64String($buffer)
 }
 
