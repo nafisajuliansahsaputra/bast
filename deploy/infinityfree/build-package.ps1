@@ -360,9 +360,9 @@ $env:BAST_DEMO_RESET = "false"
 
 Push-Location $Core
 try {
-    & $PhpPath artisan migrate:fresh --seed --force
+    & $PhpPath artisan migrate --seed --force
     if ($LASTEXITCODE -ne 0) {
-        throw "Pembuatan database demo SQLite gagal."
+        throw "Migrasi dan seeding database demo SQLite gagal."
     }
 }
 finally {
