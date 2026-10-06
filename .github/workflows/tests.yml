@@ -42,5 +42,15 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Format legacy installer for audit
+        run: vendor/bin/pint deploy/infinityfree/install.php
+
+      - name: Upload formatted installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: formatted-installer
+          path: deploy/infinityfree/install.php
+          if-no-files-found: error
+
       - name: Run CI Checks
         run: composer ci:check
