@@ -6,6 +6,15 @@ A full-stack internal document management system for creating, managing, finaliz
 
 Built with **Laravel, React, TypeScript, Inertia.js, Tailwind CSS, and relational database technologies**.
 
+## Live Demo
+
+**Live Application:**  
+https://bast.site.je/
+
+The public deployment is intended as a portfolio demonstration and uses synthetic demo data.
+
+---
+
 ## About the Project
 
 BAST is an internal document management application designed to organize the complete lifecycle of handover documents.
