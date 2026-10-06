@@ -51,34 +51,19 @@ The system covers:
 
 ## Project Background
 
-The original concept for this system was developed during an internship at **Diskominfo Kabupaten Cianjur in January 2024**.
+BAST was developed as a **2024 project** during an internship at **Diskominfo Kabupaten Cianjur**.
 
-The original source code is no longer available.
+The project focuses on digitizing the Berita Acara Serah Terima workflow through a structured full-stack application covering document creation, lifecycle management, access control, PDF generation, archival, and administrative operations.
 
-In 2026, the project was independently reconstructed from the original concept and workflow as a modern full-stack portfolio project.
-
-The reconstruction focuses on improving:
-
-- application architecture
-- UI/UX consistency
-- responsive design
-- authorization
-- document lifecycle handling
-- security
-- auditability
-- validation
-- automated testing
-- developer experience
-
-This repository contains the **2026 reconstruction**, not the original internship source code.
+This repository is maintained as the portfolio and demonstration source for the project.
 
 ---
 
 ## Disclaimer
 
-> **This project is an independent reconstruction of a system originally developed during an internship in 2024. It is presented as a portfolio project and is not an official production system of Diskominfo Kabupaten Cianjur.**
+> **BAST is presented as a portfolio project based on work developed during the 2024 internship period. It is not an official production system or official repository of Diskominfo Kabupaten Cianjur.**
 
-Institutional names and document terminology are retained only to preserve the historical context of the original project.
+Institutional names and document terminology are retained only to preserve the project context.
 
 The application uses synthetic demo data and does not contain real operational records or production credentials.
 
@@ -123,7 +108,7 @@ Document numbers are generated automatically when a BAST is finalized.
 Example:
 
 ```text
-001/BAST/DISKOMINFO/VIII/2026
+001/BAST/DISKOMINFO/VIII/2024
 ```
 
 The application uses dedicated document sequence records to maintain consistent numbering.
@@ -363,7 +348,7 @@ The web application uses its own **BAST identity**.
 
 Government identity is not used as the application logo or favicon.
 
-Institutional visual elements are limited to generated document context so the reconstruction is not presented as an official government software product.
+Institutional visual elements are limited to generated document context so the portfolio project is not presented as an official government software product.
 
 ---
 
@@ -623,7 +608,7 @@ Production secrets are configured through Railway environment variables and are 
 
 ## Portfolio Status
 
-The current reconstruction covers the complete primary application workflow:
+The project covers the complete primary application workflow:
 
 ```text
 Authentication
@@ -652,9 +637,8 @@ This repository should not be interpreted as:
 - an official Diskominfo Kabupaten Cianjur repository
 - an official government production deployment
 - the source of official government documents
-- the original 2024 internship repository
 
-It demonstrates an independent reconstruction and modernization of an earlier internship project concept.
+It is maintained as the portfolio and demonstration repository for the **2024 BAST project**.
 
 ---
 
