@@ -6,23 +6,6 @@ A full-stack internal document management system for creating, managing, finaliz
 
 Built with **Laravel, React, TypeScript, Inertia.js, Tailwind CSS, and relational database technologies**.
 
-## Live Demo
-
-**Live Application:**  
-https://bast-production-6c5d.up.railway.app
-
-The public deployment is intended exclusively as a portfolio demonstration and uses synthetic demo data.
-
-Demo administrator account:
-
-```text
-Email: admin@bast.local
-```
-
-The demo password is intentionally not stored in this repository.
-
----
-
 ## About the Project
 
 BAST is an internal document management application designed to organize the complete lifecycle of handover documents.
@@ -588,13 +571,13 @@ Test counts are intentionally not hardcoded so documentation does not become sta
 
 ---
 
-## Deployment
+## Deployment Configuration
 
-The public portfolio demo is containerized with Docker and deployed through **Railway**.
+The repository includes containerized deployment configuration for portfolio and demonstration environments.
 
 Deployment-specific configuration includes:
 
-- production HTTPS
+- production HTTPS support
 - trusted reverse proxy handling
 - Apache
 - PHP 8.3
@@ -602,7 +585,7 @@ Deployment-specific configuration includes:
 - SQLite demo persistence
 - automated migrations and demo seeding
 
-Production secrets are configured through Railway environment variables and are not committed to this repository.
+Hosting credentials and production secrets are not committed to this repository.
 
 ---
 
