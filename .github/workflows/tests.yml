@@ -13,6 +13,11 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+      BAST_SUPER_ADMIN_PASSWORD: ci-only-demo-password-not-for-production
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -31,8 +36,21 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Prepare CI database
+        run: touch database/database.sqlite
+
       - name: Setup Application
         run: composer setup
+
+      - name: Format legacy installer for audit
+        run: vendor/bin/pint deploy/infinityfree/install.php
+
+      - name: Upload formatted installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: formatted-installer
+          path: deploy/infinityfree/install.php
+          if-no-files-found: error
 
       - name: Run CI Checks
         run: composer ci:check

@@ -1,6 +1,13 @@
 <?php
 
 declare(strict_types=1);
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 const SETUP_TOKEN_HASH = '__SETUP_TOKEN_HASH__';
 
@@ -22,8 +29,8 @@ function h(string $value): string
 function envQuote(string $value): string
 {
     return '"'.str_replace(
-        ["\\", '"', "\r", "\n"],
-        ["\\\\", '\\"', '', ''],
+        ['\\', '"', "\r", "\n"],
+        ['\\\\', '\\"', '', ''],
         $value,
     ).'"';
 }
@@ -119,42 +126,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         require $core.'/vendor/autoload.php';
 
-        /** @var \Illuminate\Foundation\Application $app */
+        /** @var Application $app */
         $app = require $core.'/bootstrap/app.php';
         $app->usePublicPath(__DIR__);
-        $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        $app->make(Kernel::class)->bootstrap();
 
-        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        DB::connection()->getPdo();
 
         foreach (['roles', 'users', 'basts', 'migrations'] as $requiredTable) {
-            if (! \Illuminate\Support\Facades\Schema::hasTable($requiredTable)) {
+            if (! Schema::hasTable($requiredTable)) {
                 throw new RuntimeException(
                     'Database demo BAST tidak lengkap. Build ulang package InfinityFree.',
                 );
             }
         }
 
-        $superAdminRole = \App\Models\Role::query()
+        $superAdminRole = Role::query()
             ->where('slug', 'super-admin')
             ->first();
 
-        if (! $superAdminRole instanceof \App\Models\Role) {
+        if (! $superAdminRole instanceof Role) {
             throw new RuntimeException(
                 'Role Super Admin tidak ditemukan pada database demo.',
             );
         }
 
-        $superAdmin = \App\Models\User::query()
+        $superAdmin = User::query()
             ->where('role_id', $superAdminRole->id)
             ->first();
 
-        if (! $superAdmin instanceof \App\Models\User) {
+        if (! $superAdmin instanceof User) {
             throw new RuntimeException(
                 'Akun Super Admin tidak ditemukan pada database demo.',
             );
         }
 
-        $emailAlreadyUsed = \App\Models\User::query()
+        $emailAlreadyUsed = User::query()
             ->where('email', $adminEmail)
             ->whereKeyNot($superAdmin->getKey())
             ->exists();
@@ -168,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $superAdmin->forceFill([
             'email' => $adminEmail,
             'email_verified_at' => now(),
-            'password' => \Illuminate\Support\Facades\Hash::make(
+            'password' => Hash::make(
                 $adminPassword,
             ),
         ])->save();
@@ -221,13 +228,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         dan tentukan akun Super Admin.
     </p>
 
-    <?php if ($error !== null): ?>
+    <?php if ($error !== null) { ?>
         <div class="msg err"><?= h($error) ?></div>
-    <?php endif; ?>
+    <?php } ?>
 
-    <?php if ($success !== null): ?>
+    <?php if ($success !== null) { ?>
         <div class="msg ok"><?= h($success) ?></div>
-    <?php else: ?>
+    <?php } else { ?>
         <form method="post" autocomplete="off">
             <label>Setup Token</label>
             <input name="setup_token" required>
@@ -240,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <button type="submit">Aktifkan BAST</button>
         </form>
-    <?php endif; ?>
+    <?php } ?>
 </main>
 </body>
 </html>

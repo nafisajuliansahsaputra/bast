@@ -14,8 +14,8 @@
 /dist
 .DS_Store
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -28,3 +28,27 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+
+# secrets / credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials.json
+secrets.json
+service-account*.json
+
+# local data exports / backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+*.sql.gz
+/backups/
+
+# logs
+*.log
