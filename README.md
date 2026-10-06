@@ -1,63 +1,52 @@
 # BAST — Digital Handover Management System
 
-**Sistem Informasi Berita Acara Serah Terima**
+Full-stack internal document management system for creating, reviewing, finalizing, generating, and archiving **Berita Acara Serah Terima (BAST)** through a structured, role-based, and auditable workflow.
 
-A full-stack internal document management system for creating, managing, finalizing, generating, and archiving **Berita Acara Serah Terima (BAST)** through a structured, role-based, and auditable digital workflow.
+**2024 Internship Project · Complete · Full-Stack Development / UI/UX**
 
-Built with **Laravel, React, TypeScript, Inertia.js, Tailwind CSS, and relational database technologies**.
+[Live Demo](https://bast.site.je/) · [Portfolio Case Study](https://natsx.my.id/work/bast-management-system)
 
-## Live Demo
+> The hosted recruiter demo includes a one-click **Explore Demo** entry, uses synthetic data, and is read-only so the workflow can be inspected without exposing operational records.
 
-**Live Application:**  
-https://bast.site.je/
+## Recruiter snapshot
 
-The public deployment is intended as a portfolio demonstration and uses synthetic demo data.
+BAST demonstrates full-stack application development across backend business rules, frontend product flows, relational data modeling, document generation, authorization, auditability, deployment, and automated quality checks.
 
----
+| Area | Implementation |
+| --- | --- |
+| Backend | Laravel 13, PHP 8.3+, Eloquent ORM |
+| Frontend | React 19, TypeScript, Inertia.js 3, Tailwind CSS 4 |
+| Data | MySQL for local development, SQLite for the hosted portfolio demo |
+| Authentication | Laravel Fortify, email verification, password reset, 2FA |
+| Authorization | Server-side role and capability enforcement |
+| Documents | Structured BAST lifecycle, automatic numbering, DomPDF |
+| Auditability | Activity log with resource, before/after values, IP, user agent, timestamp |
+| Quality | Pest, PHPStan/Larastan, Laravel Pint, ESLint, Prettier, TypeScript, GitHub Actions |
 
-## About the Project
+### Engineering highlights
 
-BAST is an internal document management application designed to organize the complete lifecycle of handover documents.
+- Modeled the complete document lifecycle from **Draft → Finalized → Completed → Archived**, including reopen, revision, cancellation, and restoration flows.
+- Enforced authorization on the **server side**, rather than relying on hidden frontend controls.
+- Implemented **automatic document numbering** with dedicated sequence records.
+- Used **UUID route identifiers** so public application URLs do not expose incremental database IDs.
+- Built a five-step creation flow covering document information, parties, handover items, attachments, and review.
+- Added **server-side PDF generation** for structured handover documents.
+- Implemented attachment validation, relationship checks, download authorization, and deletion rules through the Laravel filesystem.
+- Added database-backed operational dashboards, master data management, user administration, and activity logging.
+- Built a **one-click read-only recruiter demo** backed by synthetic data.
+- Added CI quality gates for PHP, Laravel, TypeScript, formatting, static analysis, tests, and repository security scanning.
 
-The system covers:
+## Project background
 
-- structured BAST creation
-- multi-step document forms
-- automatic document numbering
-- first and second party management
-- dynamic handover items
-- supporting attachments
-- document preview
-- server-side PDF generation
-- document lifecycle management
-- revision workflow
-- archive management
-- role-based access control
-- user management
-- master data management
-- activity logging
-- two-factor authentication
-- responsive desktop and mobile interfaces
+BAST was developed as a **2024 internship project at Diskominfo Kabupaten Cianjur** to digitize the Berita Acara Serah Terima workflow.
 
----
+The project covers document creation, lifecycle management, administrative data, access control, PDF output, archival, and operational history. This repository is maintained as the portfolio and demonstration source for that project.
 
-## Project Background
+## Portfolio disclaimer
 
-BAST was developed as a **2024 project** during an internship at **Diskominfo Kabupaten Cianjur**.
+> **BAST is a portfolio project based on work developed during the 2024 internship period. It is not an official production system or official repository of Diskominfo Kabupaten Cianjur.**
 
-The project focuses on digitizing the Berita Acara Serah Terima workflow through a structured full-stack application covering document creation, lifecycle management, access control, PDF generation, archival, and administrative operations.
-
-This repository is maintained as the portfolio and demonstration source for the project.
-
----
-
-## Disclaimer
-
-> **BAST is presented as a portfolio project based on work developed during the 2024 internship period. It is not an official production system or official repository of Diskominfo Kabupaten Cianjur.**
-
-Institutional names and document terminology are retained only to preserve the project context.
-
-The application uses synthetic demo data and does not contain real operational records or production credentials.
+Institutional names and document terminology are retained only to preserve the project context. The hosted demo uses synthetic data and contains no real operational records or production credentials.
 
 ---
 
