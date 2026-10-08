@@ -193,7 +193,7 @@ jobs:
           PY
 
       - name: Upload deployment artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: bast-infinityfree
           path: dist/
