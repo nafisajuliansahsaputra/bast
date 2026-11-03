@@ -4,7 +4,7 @@ Full-stack internal document management system for creating, reviewing, finalizi
 
 **2024 Internship Project · Complete · Full-Stack Development / UI/UX**
 
-[Live Demo](https://bast.site.je/) · [Portfolio Case Study](https://natsx.my.id/work/bast-management-system)
+[Live Demo](https://bast.site.je/) · [Portfolio Case Study](https://natsx.my.id/work/bast-management-system) · [Engineering Deep Dive](https://natsx.my.id/engineering/laravel-document-workflow-rbac)
 
 > The hosted recruiter demo includes a one-click **Explore Demo** entry, uses synthetic data, and is read-only so the workflow can be inspected without exposing operational records.
 
