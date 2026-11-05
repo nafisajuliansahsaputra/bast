@@ -44,7 +44,7 @@ jobs:
         run: composer install --no-dev --prefer-dist --no-interaction --no-progress
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           cache: npm
@@ -193,7 +193,7 @@ jobs:
           PY
 
       - name: Upload deployment artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: bast-infinityfree
           path: dist/
